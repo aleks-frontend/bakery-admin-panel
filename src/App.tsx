@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { OrdersPage } from "./app/OrdersPage"
+import { Header } from "./components/Header"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,7 +14,10 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <OrdersPage />
+      <div className="min-h-screen">
+        <Header />
+        <OrdersPage />
+      </div>
     </QueryClientProvider>
   )
 }

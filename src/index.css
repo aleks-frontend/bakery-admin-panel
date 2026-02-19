@@ -54,6 +54,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: rgb(253 246 236 / var(--tw-bg-opacity, 1));
   }
 }
