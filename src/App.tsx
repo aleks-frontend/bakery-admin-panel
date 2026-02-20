@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { OrdersPage } from "./app/OrdersPage"
 import { Header } from "./components/Header"
+import "./i18n"
 
 const queryClient = new QueryClient({
   defaultOptions: {

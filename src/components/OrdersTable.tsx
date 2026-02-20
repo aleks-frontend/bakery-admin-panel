@@ -19,6 +19,7 @@ import { StatusDropdown } from "./StatusDropdown"
 import { Order, OrderStatus } from "@/types/order"
 import { ArrowUpDown, Eye } from "lucide-react"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 
 interface OrdersTableProps {
   orders: Order[]
@@ -31,6 +32,7 @@ export function OrdersTable({
   onViewDetails,
   onStatusChange,
 }: OrdersTableProps) {
+  const { t } = useTranslation()
   const [sorting, setSorting] = useState<SortingState>([])
 
   const columns: ColumnDef<Order>[] = [
@@ -43,7 +45,7 @@ export function OrdersTable({
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             className="h-8 px-2"
           >
-            Order ID
+            {t("Order ID")}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         )
@@ -54,12 +56,12 @@ export function OrdersTable({
     },
     {
       accessorKey: "recipient",
-      header: "Recipient",
+      header: t("Recipient"),
       cell: ({ row }) => <div>{row.getValue("recipient")}</div>,
     },
     {
       accessorKey: "phone",
-      header: "Phone",
+      header: t("Phone"),
       cell: ({ row }) => <div>{row.getValue("phone")}</div>,
     },
     {
@@ -71,7 +73,7 @@ export function OrdersTable({
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             className="h-8 px-2"
           >
-            Date
+            {t("Date")}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         )
@@ -80,20 +82,20 @@ export function OrdersTable({
     },
     {
       accessorKey: "location",
-      header: "Location",
+      header: t("Location"),
       cell: ({ row }) => <div>{row.getValue("location")}</div>,
     },
     {
       accessorKey: "totalPrice",
-      header: "Total Price",
+      header: t("Total Price"),
       cell: ({ row }) => {
         const price = row.getValue("totalPrice") as number
-        return <div className="font-medium">{price} RSD</div>
+        return <div className="font-medium">{price} {t("RSD")}</div>
       },
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: t("Status"),
       cell: ({ row }) => {
         const order = row.original
         return (
@@ -114,7 +116,7 @@ export function OrdersTable({
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("Actions"),
       cell: ({ row }) => {
         const order = row.original
         return (
@@ -124,7 +126,7 @@ export function OrdersTable({
             onClick={() => onViewDetails(order)}
           >
             <Eye className="h-4 w-4 mr-2" />
-            View details
+            {t("View details")}
           </Button>
         )
       },
@@ -178,7 +180,7 @@ export function OrdersTable({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No orders found.
+                {t("No orders found.")}
               </TableCell>
             </TableRow>
           )}

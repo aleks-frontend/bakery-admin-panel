@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react"
+import { useTranslation } from "react-i18next"
 import { useOrdersQuery } from "@/hooks/useOrdersQuery"
 import { OrdersTable } from "@/components/OrdersTable"
 import { OrderDetailsDrawer } from "@/components/OrderDetailsDrawer"
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { Search, X } from "lucide-react"
 
 export function OrdersPage() {
+  const { t } = useTranslation()
   const { data: orders = [], isLoading, error } = useOrdersQuery()
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -56,7 +58,7 @@ export function OrdersPage() {
     return (
       <div className="container mx-auto py-8">
         <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Loading orders...</p>
+          <p className="text-muted-foreground">{t("Loading orders...")}</p>
         </div>
       </div>
     )
@@ -68,7 +70,7 @@ export function OrdersPage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <p className="text-destructive font-medium mb-2">
-              Error loading orders
+              {t("Error loading orders")}
             </p>
             <p className="text-sm text-muted-foreground">{error.message}</p>
           </div>
@@ -80,9 +82,9 @@ export function OrdersPage() {
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("Orders")}</h1>
         <p className="text-muted-foreground">
-          Manage bread and pastry orders
+          {t("Manage bread and pastry orders")}
         </p>
       </div>
 
@@ -91,7 +93,7 @@ export function OrdersPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by recipient or phone..."
+            placeholder={t("Search by recipient or phone...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -109,13 +111,13 @@ export function OrdersPage() {
         </div>
         <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as OrderStatus | "all")}>
           <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder={t("Filter by status")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="Not received">Not received</SelectItem>
-            <SelectItem value="In progress">In progress</SelectItem>
-            <SelectItem value="Delivered">Delivered</SelectItem>
+            <SelectItem value="all">{t("All Statuses")}</SelectItem>
+            <SelectItem value="Not received">{t("Not received")}</SelectItem>
+            <SelectItem value="In progress">{t("In progress")}</SelectItem>
+            <SelectItem value="Delivered">{t("Delivered")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -124,7 +126,10 @@ export function OrdersPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing {filteredOrders.length} of {orders.length} orders
+            {t("Showing {{count}} of {{total}} orders", {
+              count: filteredOrders.length,
+              total: orders.length,
+            })}
           </p>
         </div>
         <OrdersTable
