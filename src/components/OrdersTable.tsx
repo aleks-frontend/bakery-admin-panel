@@ -5,7 +5,7 @@ import {
   flexRender,
   type ColumnDef,
   type SortingState,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 import {
   Table,
   TableBody,
@@ -13,18 +13,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { StatusDropdown } from "./StatusDropdown"
-import { Order, OrderStatus } from "@/types/order"
-import { ArrowUpDown, Eye } from "lucide-react"
-import { useState } from "react"
-import { useTranslation } from "react-i18next"
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { StatusDropdown } from "./StatusDropdown";
+import { Order, OrderStatus } from "@/types/order";
+import { ArrowUpDown, Eye } from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface OrdersTableProps {
-  orders: Order[]
-  onViewDetails: (order: Order) => void
-  onStatusChange?: (orderId: string, newStatus: OrderStatus) => void
+  orders: Order[];
+  onViewDetails: (order: Order) => void;
+  onStatusChange?: (orderId: string, newStatus: OrderStatus) => void;
 }
 
 export function OrdersTable({
@@ -32,8 +32,8 @@ export function OrdersTable({
   onViewDetails,
   onStatusChange,
 }: OrdersTableProps) {
-  const { t } = useTranslation()
-  const [sorting, setSorting] = useState<SortingState>([])
+  const { t } = useTranslation();
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const columns: ColumnDef<Order>[] = [
     {
@@ -48,7 +48,7 @@ export function OrdersTable({
             {t("Order ID")}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
       cell: ({ row }) => (
         <div className="font-medium">{row.getValue("orderId")}</div>
@@ -76,7 +76,7 @@ export function OrdersTable({
             {t("Date")}
             <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
-        )
+        );
       },
       cell: ({ row }) => <div>{row.getValue("date")}</div>,
     },
@@ -89,15 +89,19 @@ export function OrdersTable({
       accessorKey: "totalPrice",
       header: t("Total Price"),
       cell: ({ row }) => {
-        const price = row.getValue("totalPrice") as number
-        return <div className="font-medium">{price} {t("RSD")}</div>
+        const price = row.getValue("totalPrice") as number;
+        return (
+          <div className="font-medium">
+            {price} {t("RSD")}
+          </div>
+        );
       },
     },
     {
       accessorKey: "status",
       header: t("Status"),
       cell: ({ row }) => {
-        const order = row.original
+        const order = row.original;
         return (
           <StatusDropdown
             currentStatus={order.status}
@@ -107,18 +111,18 @@ export function OrdersTable({
               console.log("Status change prepared:", {
                 orderId: order.orderId,
                 newStatus,
-              })
+              });
             }}
             disabled={true} // Disabled until mutation is implemented
           />
-        )
+        );
       },
     },
     {
       id: "actions",
       header: t("Actions"),
       cell: ({ row }) => {
-        const order = row.original
+        const order = row.original;
         return (
           <Button
             variant="ghost"
@@ -128,10 +132,10 @@ export function OrdersTable({
             <Eye className="h-4 w-4 mr-2" />
             {t("View details")}
           </Button>
-        )
+        );
       },
     },
-  ]
+  ];
 
   const table = useReactTable({
     data: orders,
@@ -142,21 +146,27 @@ export function OrdersTable({
     state: {
       sorting,
     },
-  })
+  });
 
   return (
     <div className="rounded-md border bg-white">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
+            <TableRow
+              key={headerGroup.id}
+              className="bg-muted/60 hover:bg-muted/60 border-b-2 border-border"
+            >
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
+                <TableHead
+                  key={header.id}
+                  className="text-foreground font-semibold text-xs uppercase tracking-wider"
+                >
                   {header.isPlaceholder
                     ? null
                     : flexRender(
                         header.column.columnDef.header,
-                        header.getContext()
+                        header.getContext(),
                       )}
                 </TableHead>
               ))}
@@ -187,5 +197,5 @@ export function OrdersTable({
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }
