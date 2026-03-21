@@ -82,7 +82,7 @@ export function LanguageSelector() {
   };
 
   return (
-    <div className="flex gap-2 z-[100]">
+    <div className="flex gap-2">
       {LANGUAGES.map(({ code, titleKey, flag }) => {
         const active = isActive(code);
         return (

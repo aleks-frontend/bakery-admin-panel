@@ -32,5 +32,12 @@
   "No articles": "Nema artikala",
   "Hungarian": "Mađarski",
   "Serbian": "Srpski",
-  "English": "Engleski"
+  "English": "Engleski",
+  "Generate PDF receipt": "Generiši PDF račun",
+  "Generating PDF...": "Generisanje PDF-a...",
+  "Receipt": "Račun",
+  "Bill to": "Kupac",
+  "Item": "Artikal",
+  "Qty": "Kol.",
+  "Amount": "Iznos"
 }

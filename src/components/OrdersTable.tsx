@@ -18,8 +18,23 @@ import { Button } from "@/components/ui/button";
 import { StatusDropdown } from "./StatusDropdown";
 import { Order, OrderStatus } from "@/types/order";
 import { ArrowUpDown, Eye } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+
+/** Parse API date strings for chronological sorting (ISO, DD.MM.YYYY, Date.parse fallbacks). */
+function parseOrderDateForSort(dateStr: string): number {
+  const s = dateStr.trim();
+  const eu = s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\b/);
+  if (eu) {
+    const d = Number(eu[1]);
+    const m = Number(eu[2]);
+    const y = Number(eu[3]);
+    const t = new Date(y, m - 1, d).getTime();
+    if (!Number.isNaN(t)) return t;
+  }
+  const t = Date.parse(s);
+  return Number.isNaN(t) ? 0 : t;
+}
 
 interface OrdersTableProps {
   orders: Order[];
@@ -27,115 +42,122 @@ interface OrdersTableProps {
   onStatusChange?: (orderId: string, newStatus: OrderStatus) => void;
 }
 
-export function OrdersTable({
-  orders,
-  onViewDetails,
-  onStatusChange,
-}: OrdersTableProps) {
+export function OrdersTable({ orders, onViewDetails }: OrdersTableProps) {
   const { t } = useTranslation();
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "date", desc: true },
+  ]);
 
-  const columns: ColumnDef<Order>[] = [
-    {
-      accessorKey: "orderId",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8 px-2"
-          >
-            {t("Order ID")}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        );
+  const columns: ColumnDef<Order>[] = useMemo(
+    () => [
+      {
+        accessorKey: "orderId",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+              className="h-8 px-2"
+            >
+              {t("Order ID")}
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div className="font-medium">{row.getValue("orderId")}</div>
+        ),
       },
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("orderId")}</div>
-      ),
-    },
-    {
-      accessorKey: "recipient",
-      header: t("Recipient"),
-      cell: ({ row }) => <div>{row.getValue("recipient")}</div>,
-    },
-    {
-      accessorKey: "phone",
-      header: t("Phone"),
-      cell: ({ row }) => <div>{row.getValue("phone")}</div>,
-    },
-    {
-      accessorKey: "date",
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8 px-2"
-          >
-            {t("Date")}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          </Button>
-        );
+      {
+        accessorKey: "recipient",
+        header: t("Recipient"),
+        cell: ({ row }) => <div>{row.getValue("recipient")}</div>,
       },
-      cell: ({ row }) => <div>{row.getValue("date")}</div>,
-    },
-    {
-      accessorKey: "location",
-      header: t("Location"),
-      cell: ({ row }) => <div>{row.getValue("location")}</div>,
-    },
-    {
-      accessorKey: "totalPrice",
-      header: t("Total Price"),
-      cell: ({ row }) => {
-        const price = row.getValue("totalPrice") as number;
-        return (
-          <div className="font-medium">
-            {price} {t("RSD")}
-          </div>
-        );
+      {
+        accessorKey: "phone",
+        header: t("Phone"),
+        cell: ({ row }) => <div>{row.getValue("phone")}</div>,
       },
-    },
-    {
-      accessorKey: "status",
-      header: t("Status"),
-      cell: ({ row }) => {
-        const order = row.original;
-        return (
-          <StatusDropdown
-            currentStatus={order.status}
-            onStatusChange={(newStatus) => {
-              // TODO: Enable when mutation is implemented
-              // onStatusChange?.(order.orderId, newStatus)
-              console.log("Status change prepared:", {
-                orderId: order.orderId,
-                newStatus,
-              });
-            }}
-            disabled={true} // Disabled until mutation is implemented
-          />
-        );
+      {
+        id: "date",
+        accessorFn: (row) => parseOrderDateForSort(row.date),
+        sortingFn: "basic",
+        sortDescFirst: true,
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() =>
+                column.toggleSorting(column.getIsSorted() === "asc")
+              }
+              className="h-8 px-2"
+            >
+              {t("Date")}
+              <ArrowUpDown className="ml-2 h-4 w-4" />
+            </Button>
+          );
+        },
+        cell: ({ row }) => <div>{row.original.date}</div>,
       },
-    },
-    {
-      id: "actions",
-      header: t("Actions"),
-      cell: ({ row }) => {
-        const order = row.original;
-        return (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onViewDetails(order)}
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            {t("View details")}
-          </Button>
-        );
+      {
+        accessorKey: "location",
+        header: t("Location"),
+        cell: ({ row }) => <div>{row.getValue("location")}</div>,
       },
-    },
-  ];
+      {
+        accessorKey: "totalPrice",
+        header: t("Total Price"),
+        cell: ({ row }) => {
+          const price = row.getValue("totalPrice") as number;
+          return (
+            <div className="font-medium">
+              {price} {t("RSD")}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "status",
+        header: t("Status"),
+        cell: ({ row }) => {
+          const order = row.original;
+          return (
+            <StatusDropdown
+              currentStatus={order.status}
+              onStatusChange={(newStatus) => {
+                // TODO: Enable when mutation is implemented
+                console.log("Status change prepared:", {
+                  orderId: order.orderId,
+                  newStatus,
+                });
+              }}
+              disabled={true} // Disabled until mutation is implemented
+            />
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: t("Actions"),
+        cell: ({ row }) => {
+          const order = row.original;
+          return (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onViewDetails(order)}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              {t("View details")}
+            </Button>
+          );
+        },
+      },
+  ],
+    [t, onViewDetails],
+  );
 
   const table = useReactTable({
     data: orders,

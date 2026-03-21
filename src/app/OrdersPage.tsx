@@ -2,7 +2,7 @@ import { useState, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useOrdersQuery } from "@/hooks/useOrdersQuery"
 import { OrdersTable } from "@/components/OrdersTable"
-import { OrderDetailsDrawer } from "@/components/OrderDetailsDrawer"
+import { OrderDetailsModal } from "@/components/OrderDetailsModal"
 import { Order, OrderStatus } from "@/types/order"
 import { Input } from "@/components/ui/input"
 import {
@@ -19,7 +19,7 @@ export function OrdersPage() {
   const { t } = useTranslation()
   const { data: orders = [], isLoading, error } = useOrdersQuery()
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all")
 
@@ -46,7 +46,7 @@ export function OrdersPage() {
 
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order)
-    setIsDrawerOpen(true)
+    setIsModalOpen(true)
   }
 
   const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
@@ -139,11 +139,11 @@ export function OrdersPage() {
         />
       </div>
 
-      {/* Order Details Drawer */}
-      <OrderDetailsDrawer
+      {/* Order details modal */}
+      <OrderDetailsModal
         order={selectedOrder}
-        open={isDrawerOpen}
-        onOpenChange={setIsDrawerOpen}
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
       />
     </div>
   )

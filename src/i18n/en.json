@@ -32,5 +32,12 @@
   "No articles": "No articles",
   "Hungarian": "Hungarian",
   "Serbian": "Serbian",
-  "English": "English"
+  "English": "English",
+  "Generate PDF receipt": "Generate PDF receipt",
+  "Generating PDF...": "Generating PDF...",
+  "Receipt": "Receipt",
+  "Bill to": "Bill to",
+  "Item": "Item",
+  "Qty": "Qty",
+  "Amount": "Amount"
 }

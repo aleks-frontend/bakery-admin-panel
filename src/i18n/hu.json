@@ -32,5 +32,12 @@
   "No articles": "Nincs cikk",
   "Hungarian": "Magyar",
   "Serbian": "Szerb",
-  "English": "Angol"
+  "English": "Angol",
+  "Generate PDF receipt": "PDF nyugta letöltése",
+  "Generating PDF...": "PDF készítése...",
+  "Receipt": "Nyugta",
+  "Bill to": "Vevő",
+  "Item": "Tétel",
+  "Qty": "Menny.",
+  "Amount": "Összeg"
 }

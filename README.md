@@ -49,7 +49,7 @@ src/
 │   ├── OrdersTable.tsx          # Table component with TanStack Table
 │   ├── StatusBadge.tsx          # Status badge component
 │   ├── StatusDropdown.tsx       # Status dropdown component
-│   └── OrderDetailsDrawer.tsx   # Order details dialog
+│   └── OrderDetailsModal.tsx    # Order details dialog
 ├── hooks/
 │   ├── useOrdersQuery.ts        # React Query hook for fetching orders
 │   └── useUpdateOrderStatus.ts  # Mutation hook (prepared, disabled)

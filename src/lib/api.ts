@@ -60,6 +60,8 @@ export async function updateOrderStatus(
   // TODO: Implement n8n webhook POST request to update order status
   // Example: POST https://n8n.aleksthecoder.com/webhook/update-order-status
   // Body: { orderId, status: newStatus }
-  
-  throw new Error("Status update not yet implemented")
+
+  throw new Error(
+    `Status update not yet implemented (orderId=${orderId}, status=${newStatus})`
+  )
 }
