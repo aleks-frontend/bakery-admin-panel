@@ -24,6 +24,7 @@ export function OrdersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all")
   const [workshopPdfLoading, setWorkshopPdfLoading] = useState(false)
+  const [stickersPdfLoading, setStickersPdfLoading] = useState(false)
 
   const filteredOrders = useMemo(() => {
     let filtered = orders
@@ -74,6 +75,23 @@ export function OrdersPage() {
       console.error(err)
     } finally {
       setWorkshopPdfLoading(false)
+    }
+  }
+
+  async function handleGenerateStickers() {
+    if (!selectedOrders.length) return
+    setStickersPdfLoading(true)
+    try {
+      const { downloadPackageStickersPdf } = await import(
+        "@/components/PackageStickersPdf"
+      )
+      await downloadPackageStickersPdf(selectedOrders, {
+        rsd: t("RSD"),
+      })
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setStickersPdfLoading(false)
     }
   }
 
@@ -165,19 +183,31 @@ export function OrdersPage() {
 
       {selectedOrders.length > 0 ? (
         <div className="fixed inset-x-0 bottom-4 z-20 flex justify-center px-4">
-          <div className="flex w-full max-w-3xl items-center justify-between gap-4 rounded-lg border bg-background/95 px-4 py-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/85">
+          <div className="flex w-full max-w-3xl flex-col gap-3 rounded-lg border bg-background/95 px-4 py-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <p className="text-sm font-medium">
               {t("{{count}} selected", { count: selectedOrders.length })}
             </p>
-            <Button
-              type="button"
-              onClick={handleGenerateWorkshopList}
-              disabled={workshopPdfLoading}
-            >
-              {workshopPdfLoading
-                ? t("Generating PDF...")
-                : t("Generate Workshop List")}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleGenerateStickers}
+                disabled={stickersPdfLoading}
+              >
+                {stickersPdfLoading
+                  ? t("Generating PDF...")
+                  : t("Generate stickers")}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleGenerateWorkshopList}
+                disabled={workshopPdfLoading}
+              >
+                {workshopPdfLoading
+                  ? t("Generating PDF...")
+                  : t("Generate Workshop List")}
+              </Button>
+            </div>
           </div>
         </div>
       ) : null}
