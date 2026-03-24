@@ -19,9 +19,11 @@ export function OrdersPage() {
   const { t } = useTranslation()
   const { data: orders = [], isLoading, error } = useOrdersQuery()
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [selectedOrders, setSelectedOrders] = useState<Order[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all")
+  const [workshopPdfLoading, setWorkshopPdfLoading] = useState(false)
 
   const filteredOrders = useMemo(() => {
     let filtered = orders
@@ -52,6 +54,27 @@ export function OrdersPage() {
   const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
     // TODO: Implement when mutation is enabled
     console.log("Status change:", { orderId, newStatus })
+  }
+
+  async function handleGenerateWorkshopList() {
+    if (!selectedOrders.length) return
+    setWorkshopPdfLoading(true)
+    try {
+      const { downloadWorkshopListPdf } = await import(
+        "@/components/WorkshopListPdf"
+      )
+      await downloadWorkshopListPdf(selectedOrders, {
+        title: t("Workshop List"),
+        generatedAt: t("Generated at"),
+        total: t("Total"),
+        noArticles: t("No articles"),
+        unparsedLines: t("Unparsed lines"),
+      })
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setWorkshopPdfLoading(false)
+    }
   }
 
   if (isLoading) {
@@ -136,8 +159,28 @@ export function OrdersPage() {
           orders={filteredOrders}
           onViewDetails={handleViewDetails}
           onStatusChange={handleStatusChange}
+          onSelectionChange={setSelectedOrders}
         />
       </div>
+
+      {selectedOrders.length > 0 ? (
+        <div className="fixed inset-x-0 bottom-4 z-20 flex justify-center px-4">
+          <div className="flex w-full max-w-3xl items-center justify-between gap-4 rounded-lg border bg-background/95 px-4 py-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/85">
+            <p className="text-sm font-medium">
+              {t("{{count}} selected", { count: selectedOrders.length })}
+            </p>
+            <Button
+              type="button"
+              onClick={handleGenerateWorkshopList}
+              disabled={workshopPdfLoading}
+            >
+              {workshopPdfLoading
+                ? t("Generating PDF...")
+                : t("Generate Workshop List")}
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {/* Order details modal */}
       <OrderDetailsModal

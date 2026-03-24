@@ -39,5 +39,13 @@
   "Bill to": "Bill to",
   "Item": "Item",
   "Qty": "Qty",
-  "Amount": "Amount"
+  "Amount": "Amount",
+  "Select all": "Select all",
+  "Select order": "Select order",
+  "{{count}} selected": "{{count}} selected",
+  "Generate Workshop List": "Generate Workshop List",
+  "Workshop List": "Workshop List",
+  "Generated at": "Generated at",
+  "Total": "Total",
+  "Unparsed lines": "Unparsed lines"
 }

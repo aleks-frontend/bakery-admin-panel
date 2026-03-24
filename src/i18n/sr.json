@@ -39,5 +39,13 @@
   "Bill to": "Kupac",
   "Item": "Artikal",
   "Qty": "Kol.",
-  "Amount": "Iznos"
+  "Amount": "Iznos",
+  "Select all": "Izaberi sve",
+  "Select order": "Izaberi porudžbinu",
+  "{{count}} selected": "{{count}} izabrano",
+  "Generate Workshop List": "Generiši listu za radionicu",
+  "Workshop List": "Lista za radionicu",
+  "Generated at": "Generisano",
+  "Total": "Ukupno",
+  "Unparsed lines": "Linije koje nisu parsirane"
 }

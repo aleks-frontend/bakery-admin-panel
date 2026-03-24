@@ -39,5 +39,13 @@
   "Bill to": "Vevő",
   "Item": "Tétel",
   "Qty": "Menny.",
-  "Amount": "Összeg"
+  "Amount": "Összeg",
+  "Select all": "Összes kijelölése",
+  "Select order": "Rendelés kijelölése",
+  "{{count}} selected": "{{count}} kijelölve",
+  "Generate Workshop List": "Műhelylista generálása",
+  "Workshop List": "Műhelylista",
+  "Generated at": "Generálva",
+  "Total": "Összesen",
+  "Unparsed lines": "Nem feldolgozott sorok"
 }

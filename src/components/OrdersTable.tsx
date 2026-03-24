@@ -3,8 +3,10 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   flexRender,
+  getFilteredRowModel,
   type ColumnDef,
   type SortingState,
+  type RowSelectionState,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -18,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { StatusDropdown } from "./StatusDropdown";
 import { Order, OrderStatus } from "@/types/order";
 import { ArrowUpDown, Eye } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 /** Parse API date strings for chronological sorting (ISO, DD.MM.YYYY, Date.parse fallbacks). */
@@ -40,16 +42,75 @@ interface OrdersTableProps {
   orders: Order[];
   onViewDetails: (order: Order) => void;
   onStatusChange?: (orderId: string, newStatus: OrderStatus) => void;
+  onSelectionChange?: (selectedOrders: Order[]) => void;
 }
 
-export function OrdersTable({ orders, onViewDetails }: OrdersTableProps) {
+function SelectCheckbox({
+  checked,
+  indeterminate = false,
+  onChange,
+  ariaLabel,
+}: {
+  checked: boolean;
+  indeterminate?: boolean;
+  onChange: (checked: boolean) => void;
+  ariaLabel: string;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    ref.current.indeterminate = indeterminate;
+  }, [indeterminate]);
+
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+      aria-label={ariaLabel}
+      className="h-4 w-4 rounded border-border accent-primary"
+    />
+  );
+}
+
+export function OrdersTable({
+  orders,
+  onViewDetails,
+  onSelectionChange,
+}: OrdersTableProps) {
   const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([
     { id: "date", desc: true },
   ]);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const columns: ColumnDef<Order>[] = useMemo(
     () => [
+      {
+        id: "select",
+        enableSorting: false,
+        header: ({ table }) => (
+          <div className="flex items-center justify-center">
+            <SelectCheckbox
+              checked={table.getIsAllRowsSelected()}
+              indeterminate={table.getIsSomeRowsSelected()}
+              onChange={(checked) => table.toggleAllRowsSelected(checked)}
+              ariaLabel={t("Select all")}
+            />
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center justify-center">
+            <SelectCheckbox
+              checked={row.getIsSelected()}
+              onChange={(checked) => row.toggleSelected(checked)}
+              ariaLabel={t("Select order")}
+            />
+          </div>
+        ),
+      },
       {
         accessorKey: "orderId",
         header: ({ column }) => {
@@ -163,12 +224,25 @@ export function OrdersTable({ orders, onViewDetails }: OrdersTableProps) {
     data: orders,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: setSorting,
+    onRowSelectionChange: setRowSelection,
+    getRowId: (row) => row.orderId,
+    enableRowSelection: true,
     state: {
       sorting,
+      rowSelection,
     },
   });
+
+  useEffect(() => {
+    if (!onSelectionChange) return;
+    const selectedOrders = table.getSelectedRowModel().rows.map(
+      (row) => row.original,
+    );
+    onSelectionChange(selectedOrders);
+  }, [onSelectionChange, rowSelection, table]);
 
   return (
     <div className="rounded-md border bg-white">
