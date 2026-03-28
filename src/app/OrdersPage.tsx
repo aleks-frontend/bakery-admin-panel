@@ -25,6 +25,7 @@ export function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all")
   const [workshopPdfLoading, setWorkshopPdfLoading] = useState(false)
   const [stickersPdfLoading, setStickersPdfLoading] = useState(false)
+  const [xlsLoading, setXlsLoading] = useState(false)
 
   const filteredOrders = useMemo(() => {
     let filtered = orders
@@ -92,6 +93,21 @@ export function OrdersPage() {
       console.error(err)
     } finally {
       setStickersPdfLoading(false)
+    }
+  }
+
+  async function handleGenerateXls() {
+    if (!selectedOrders.length) return
+    setXlsLoading(true)
+    try {
+      const { downloadSelectedOrdersXls } = await import(
+        "@/lib/exportSelectedOrdersXls"
+      )
+      downloadSelectedOrdersXls(selectedOrders)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setXlsLoading(false)
     }
   }
 
@@ -206,6 +222,14 @@ export function OrdersPage() {
                 {workshopPdfLoading
                   ? t("Generating PDF...")
                   : t("Generate Workshop List")}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleGenerateXls}
+                disabled={xlsLoading}
+              >
+                {xlsLoading ? t("Generating XLS...") : t("Generate XLS")}
               </Button>
             </div>
           </div>
