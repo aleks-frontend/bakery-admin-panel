@@ -13,7 +13,13 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Search, X } from "lucide-react"
+import {
+  ClipboardList,
+  FileSpreadsheet,
+  Loader2,
+  Search,
+  X,
+} from "lucide-react"
 
 export function OrdersPage() {
   const { t } = useTranslation()
@@ -180,27 +186,50 @@ export function OrdersPage() {
       </div>
 
       {selectedOrders.length > 0 ? (
-        <div className="fixed inset-x-0 bottom-4 z-20 flex justify-center px-4">
-          <div className="flex w-full max-w-3xl flex-col gap-3 rounded-lg border bg-background/95 px-4 py-3 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/85 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <p className="text-sm font-medium">
+        <div className="fixed inset-x-0 bottom-4 z-30 flex justify-center px-4">
+          <div className="flex w-full max-w-3xl flex-col gap-3 rounded-xl border-2 border-primary/35 bg-muted px-4 py-3.5 shadow-2xl shadow-black/20 ring-1 ring-black/[0.06] backdrop-blur-md dark:border-primary/45 dark:bg-muted/95 dark:shadow-black/40 dark:ring-white/10 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <p className="text-sm font-semibold text-foreground">
               {t("{{count}} selected", { count: selectedOrders.length })}
             </p>
             <div className="flex flex-wrap items-center gap-2 sm:justify-end">
               <Button
                 type="button"
+                variant="outline"
                 onClick={handleGenerateWorkshopList}
                 disabled={workshopPdfLoading}
               >
+                {workshopPdfLoading ? (
+                  <Loader2
+                    className="mr-2 h-4 w-4 shrink-0 animate-spin"
+                    aria-hidden
+                  />
+                ) : (
+                  <ClipboardList
+                    className="mr-2 h-4 w-4 shrink-0"
+                    aria-hidden
+                  />
+                )}
                 {workshopPdfLoading
                   ? t("Generating PDF...")
                   : t("Generate Workshop List")}
               </Button>
               <Button
                 type="button"
-                variant="secondary"
+                variant="outline"
                 onClick={handleGenerateXls}
                 disabled={xlsLoading}
               >
+                {xlsLoading ? (
+                  <Loader2
+                    className="mr-2 h-4 w-4 shrink-0 animate-spin"
+                    aria-hidden
+                  />
+                ) : (
+                  <FileSpreadsheet
+                    className="mr-2 h-4 w-4 shrink-0"
+                    aria-hidden
+                  />
+                )}
                 {xlsLoading ? t("Generating XLS...") : t("Generate XLS")}
               </Button>
             </div>
