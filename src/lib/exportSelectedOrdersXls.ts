@@ -17,11 +17,10 @@ export function downloadSelectedOrdersXls(orders: Order[]): void {
     bookType: "xlsx",
     type: "array",
   });
-  const date = new Date().toISOString().slice(0, 10);
   saveAs(
     new Blob([buffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }),
-    `orders-${date}.xlsx`,
+    "orders.xlsx",
   );
 }
