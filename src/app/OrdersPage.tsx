@@ -24,7 +24,6 @@ export function OrdersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all")
   const [workshopPdfLoading, setWorkshopPdfLoading] = useState(false)
-  const [stickersPdfLoading, setStickersPdfLoading] = useState(false)
   const [xlsLoading, setXlsLoading] = useState(false)
 
   const filteredOrders = useMemo(() => {
@@ -76,23 +75,6 @@ export function OrdersPage() {
       console.error(err)
     } finally {
       setWorkshopPdfLoading(false)
-    }
-  }
-
-  async function handleGenerateStickers() {
-    if (!selectedOrders.length) return
-    setStickersPdfLoading(true)
-    try {
-      const { downloadPackageStickersPdf } = await import(
-        "@/components/PackageStickersPdf"
-      )
-      await downloadPackageStickersPdf(selectedOrders, {
-        rsd: t("RSD"),
-      })
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setStickersPdfLoading(false)
     }
   }
 
@@ -204,16 +186,6 @@ export function OrdersPage() {
               {t("{{count}} selected", { count: selectedOrders.length })}
             </p>
             <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleGenerateStickers}
-                disabled={stickersPdfLoading}
-              >
-                {stickersPdfLoading
-                  ? t("Generating PDF...")
-                  : t("Generate stickers")}
-              </Button>
               <Button
                 type="button"
                 onClick={handleGenerateWorkshopList}
