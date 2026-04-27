@@ -10,7 +10,11 @@ export function mapApiOrderToOrder(apiOrder: APIOrder): Order {
     rowNumber: apiOrder.row_number,
     orderId: apiOrder["Order ID"],
     recipient: apiOrder.Recipient,
-    phone: String(apiOrder.Phone),
+    phone: (() => {
+      const raw = String(apiOrder.Phone ?? "")
+      // Spreadsheet error strings (e.g. #ERROR!, #N/A) mean the cell is invalid
+      return raw.startsWith("#") ? "" : raw
+    })(),
     date: apiOrder.Date,
     location: apiOrder.Location,
     orderedArticlesRaw: apiOrder["Ordered articles"],

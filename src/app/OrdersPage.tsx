@@ -18,6 +18,7 @@ import {
   FileSpreadsheet,
   Loader2,
   Search,
+  Tag,
   X,
 } from "lucide-react"
 
@@ -31,6 +32,7 @@ export function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all")
   const [workshopPdfLoading, setWorkshopPdfLoading] = useState(false)
   const [xlsLoading, setXlsLoading] = useState(false)
+  const [stickersPdfLoading, setStickersPdfLoading] = useState(false)
 
   const filteredOrders = useMemo(() => {
     let filtered = orders
@@ -81,6 +83,25 @@ export function OrdersPage() {
       console.error(err)
     } finally {
       setWorkshopPdfLoading(false)
+    }
+  }
+
+  async function handleGeneratePackageStickers() {
+    if (!selectedOrders.length) return
+    setStickersPdfLoading(true)
+    try {
+      const { downloadPackageStickersPdf } = await import(
+        "@/components/PackageStickersPdf"
+      )
+      await downloadPackageStickersPdf(selectedOrders, {
+        title: t("Package Stickers"),
+        total: t("Total"),
+        noArticles: t("No articles"),
+      })
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setStickersPdfLoading(false)
     }
   }
 
@@ -212,6 +233,24 @@ export function OrdersPage() {
                 {workshopPdfLoading
                   ? t("Generating PDF...")
                   : t("Generate Workshop List")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGeneratePackageStickers}
+                disabled={stickersPdfLoading}
+              >
+                {stickersPdfLoading ? (
+                  <Loader2
+                    className="mr-2 h-4 w-4 shrink-0 animate-spin"
+                    aria-hidden
+                  />
+                ) : (
+                  <Tag className="mr-2 h-4 w-4 shrink-0" aria-hidden />
+                )}
+                {stickersPdfLoading
+                  ? t("Generating PDF...")
+                  : t("Generate Package Stickers")}
               </Button>
               <Button
                 type="button"

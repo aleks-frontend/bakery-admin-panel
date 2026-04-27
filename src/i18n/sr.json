@@ -49,5 +49,7 @@
   "Total": "Ukupno",
   "Unparsed lines": "Linije koje nisu parsirane",
   "Generate XLS": "Generiši XLS",
-  "Generating XLS...": "Generisanje XLS-a..."
+  "Generating XLS...": "Generisanje XLS-a...",
+  "Generate Package Stickers": "Generiši nalepnice za pakete",
+  "Package Stickers": "Nalepnice za pakete"
 }
