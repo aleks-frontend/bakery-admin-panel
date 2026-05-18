@@ -39,6 +39,6 @@ export const APIOrderSchema = z.object({
   "Ordered articles": z.string(),
   "Total price": z.number(),
   Status: z.string(),
-  Remark: z.string().optional(),
+  Remark: z.union([z.string(), z.number()]).optional(),
 })
 export type APIOrder = z.infer<typeof APIOrderSchema>
