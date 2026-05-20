@@ -21,6 +21,6 @@ export function mapApiOrderToOrder(apiOrder: APIOrder): Order {
     orderedArticlesParsed: parseOrderedArticles(apiOrder["Ordered articles"]),
     totalPrice: apiOrder["Total price"],
     status: apiOrder.Status as Order["status"],
-    remark: apiOrder.Remark,
+    remark: apiOrder.Remark != null ? String(apiOrder.Remark) : undefined,
   }
 }
