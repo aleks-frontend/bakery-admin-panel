@@ -1,15 +1,23 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { updateOrderStatus } from "@/lib/api"
+import { getApiBaseUrl, patchOrdersStatusUpdate } from "@/lib/api"
 import { OrderStatus } from "@/types/order"
+
+const ORDERS_STATUS_WEBHOOK_PATH = "webhook/bakery/orders/status"
+
+function ordersStatusPatchUrl(): string {
+  return `${getApiBaseUrl()}/${ORDERS_STATUS_WEBHOOK_PATH}`
+}
 
 export function useUpdateOrderStatusMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ orderId, newStatus }: { orderId: string; newStatus: OrderStatus }) =>
-      updateOrderStatus(orderId, newStatus),
+    mutationFn: (input: { orderIds: string[]; newStatus: OrderStatus }) =>
+      patchOrdersStatusUpdate(
+        input.orderIds.map((orderId) => ({ orderId, status: input.newStatus })),
+        ordersStatusPatchUrl(),
+      ),
     onSuccess: () => {
-      // Invalidate and refetch orders after successful update
       queryClient.invalidateQueries({ queryKey: ["orders"] })
     },
   })

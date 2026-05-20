@@ -1,8 +1,29 @@
-import { APIOrderSchema, Order } from "@/types/order"
+import {
+  APIOrderSchema,
+  Order,
+  OrderStatus,
+  OrderStatusWebhookRequestSchema,
+  OrderStatusWebhookResponseSchema,
+} from "@/types/order"
 import { mapApiOrderToOrder } from "./orderMapper"
 import { QueryClient } from "@tanstack/react-query"
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://n8n.aleksthecoder.com/webhook/bread-orders"
+/** Origin only. Set `VITE_API_BASE_URL` in `.env` (e.g. `https://your-host.com/`); a path on the value is ignored via `origin`. */
+export function getApiBaseUrl(): string {
+  const raw = import.meta.env.VITE_API_BASE_URL?.trim()
+  if (!raw) {
+    throw new Error(
+      "Missing VITE_API_BASE_URL. Add it to your .env file (see .env.example).",
+    )
+  }
+  return new URL(raw).origin
+}
+
+const ORDERS_LIST_WEBHOOK_PATH = "webhook/bread-orders"
+
+export function getOrdersListUrl(): string {
+  return `${getApiBaseUrl()}/${ORDERS_LIST_WEBHOOK_PATH}`
+}
 
 /**
  * Query function for fetching orders from the n8n webhook
@@ -10,7 +31,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://n8n.aleksthec
  * Used with TanStack Query's fetchQuery
  */
 export async function fetchOrdersQueryFn(): Promise<Order[]> {
-  const response = await fetch(API_BASE_URL)
+  const response = await fetch(getOrdersListUrl())
   
   if (!response.ok) {
     throw new Error(`Failed to fetch orders: ${response.status} ${response.statusText}`)
@@ -49,19 +70,31 @@ export async function fetchOrders(queryClient: QueryClient): Promise<Order[]> {
 }
 
 /**
- * Updates order status
- * TODO: Implement n8n webhook call for status updates
- * This will be called when status update functionality is enabled
+ * PATCH order status changes to the n8n webhook.
+ * Payload shape: `[{ updates: [{ orderId, status }, ...] }]`
  */
-export async function updateOrderStatus(
-  orderId: string,
-  newStatus: Order["status"]
-): Promise<void> {
-  // TODO: Implement n8n webhook POST request to update order status
-  // Example: POST https://n8n.aleksthecoder.com/webhook/update-order-status
-  // Body: { orderId, status: newStatus }
+export async function patchOrdersStatusUpdate(
+  updates: { orderId: string; status: OrderStatus }[],
+  requestUrl: string,
+): Promise<{ success: boolean; updatedCount: number }> {
+  if (!updates.length) {
+    throw new Error("patchOrdersStatusUpdate: at least one update is required")
+  }
 
-  throw new Error(
-    `Status update not yet implemented (orderId=${orderId}, status=${newStatus})`
-  )
+  const body = OrderStatusWebhookRequestSchema.parse({ updates })
+
+  const response = await fetch(requestUrl, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to update order status: ${response.status} ${response.statusText}`,
+    )
+  }
+
+  const data = await response.json()
+  return OrderStatusWebhookResponseSchema.parse(data)
 }

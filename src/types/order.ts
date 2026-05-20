@@ -1,8 +1,28 @@
 import { z } from "zod"
 
-// OrderStatus enum
-export const OrderStatusSchema = z.enum(["Not received", "In progress", "Delivered"])
-export type OrderStatus = z.infer<typeof OrderStatusSchema>
+/** Canonical statuses accepted by the status webhook and the UI. */
+export const ORDER_STATUSES = ["Not received", "In Progress", "Delivered"] as const
+export type OrderStatus = (typeof ORDER_STATUSES)[number]
+
+export const OrderStatusSchema = z.enum(ORDER_STATUSES)
+
+/** n8n webhook: PATCH body is a one-element array wrapping `updates`. */
+export const OrderStatusWebhookUpdateSchema = z.object({
+  orderId: z.string(),
+  status: OrderStatusSchema,
+})
+
+export const OrderStatusWebhookEnvelopeSchema = z.object({
+  updates: z.array(OrderStatusWebhookUpdateSchema),
+})
+
+export const OrderStatusWebhookRequestSchema = OrderStatusWebhookEnvelopeSchema
+
+export const OrderStatusWebhookResponseSchema = z.object({
+  success: z.boolean(),
+  updatedCount: z.number(),
+})
+export type OrderStatusWebhookResponse = z.infer<typeof OrderStatusWebhookResponseSchema>
 
 // ParsedOrderItem schema
 export const ParsedOrderItemSchema = z.object({

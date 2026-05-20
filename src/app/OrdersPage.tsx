@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useOrdersQuery } from "@/hooks/useOrdersQuery"
+import { useUpdateOrderStatusMutation } from "@/hooks/useUpdateOrderStatus"
 import { OrdersTable } from "@/components/OrdersTable"
 import { OrderDetailsModal } from "@/components/OrderDetailsModal"
 import { Order, OrderStatus } from "@/types/order"
@@ -24,6 +25,8 @@ import {
 export function OrdersPage() {
   const { t } = useTranslation()
   const { data: orders = [], isLoading, error } = useOrdersQuery()
+  const { mutate: mutateOrderStatus, isPending: isStatusMutationPending } =
+    useUpdateOrderStatusMutation()
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [selectedOrders, setSelectedOrders] = useState<Order[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -53,15 +56,29 @@ export function OrdersPage() {
     return filtered
   }, [orders, statusFilter, searchQuery])
 
+  useEffect(() => {
+    if (!selectedOrder) return
+    const fresh = orders.find((o) => o.orderId === selectedOrder.orderId)
+    if (fresh && fresh !== selectedOrder) {
+      setSelectedOrder(fresh)
+    }
+  }, [orders, selectedOrder])
+
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order)
     setIsModalOpen(true)
   }
 
-  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
-    // TODO: Implement when mutation is enabled
-    console.log("Status change:", { orderId, newStatus })
-  }
+  const handleCommitStatusFromTable = useCallback(
+    (contextOrder: Order, newStatus: OrderStatus) => {
+      const orderIds =
+        selectedOrders.length > 1
+          ? [...new Set(selectedOrders.map((o) => o.orderId))]
+          : [contextOrder.orderId]
+      mutateOrderStatus({ orderIds, newStatus })
+    },
+    [selectedOrders, mutateOrderStatus],
+  )
 
   async function handleGenerateWorkshopList() {
     if (!selectedOrders.length) return
@@ -161,7 +178,7 @@ export function OrdersPage() {
           <SelectContent>
             <SelectItem value="all">{t("All Statuses")}</SelectItem>
             <SelectItem value="Not received">{t("Not received")}</SelectItem>
-            <SelectItem value="In progress">{t("In progress")}</SelectItem>
+            <SelectItem value="In Progress">{t("In Progress")}</SelectItem>
             <SelectItem value="Delivered">{t("Delivered")}</SelectItem>
           </SelectContent>
         </Select>
@@ -180,7 +197,8 @@ export function OrdersPage() {
         <OrdersTable
           orders={filteredOrders}
           onViewDetails={handleViewDetails}
-          onStatusChange={handleStatusChange}
+          onCommitStatus={handleCommitStatusFromTable}
+          statusMutationPending={isStatusMutationPending}
           onSelectionChange={setSelectedOrders}
         />
       </div>
@@ -242,6 +260,15 @@ export function OrdersPage() {
         order={selectedOrder}
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
+        onStatusChange={(newStatus) => {
+          if (!selectedOrder) return
+          if (newStatus === selectedOrder.status) return
+          mutateOrderStatus({
+            orderIds: [selectedOrder.orderId],
+            newStatus,
+          })
+        }}
+        statusUpdateDisabled={isStatusMutationPending}
       />
     </div>
   )

@@ -41,7 +41,8 @@ function parseOrderDateForSort(dateStr: string): number {
 interface OrdersTableProps {
   orders: Order[];
   onViewDetails: (order: Order) => void;
-  onStatusChange?: (orderId: string, newStatus: OrderStatus) => void;
+  onCommitStatus: (contextOrder: Order, newStatus: OrderStatus) => void;
+  statusMutationPending?: boolean;
   onSelectionChange?: (selectedOrders: Order[]) => void;
 }
 
@@ -78,6 +79,8 @@ function SelectCheckbox({
 export function OrdersTable({
   orders,
   onViewDetails,
+  onCommitStatus,
+  statusMutationPending = false,
   onSelectionChange,
 }: OrdersTableProps) {
   const { t } = useTranslation();
@@ -188,13 +191,10 @@ export function OrdersTable({
             <StatusDropdown
               currentStatus={order.status}
               onStatusChange={(newStatus) => {
-                // TODO: Enable when mutation is implemented
-                console.log("Status change prepared:", {
-                  orderId: order.orderId,
-                  newStatus,
-                });
+                if (newStatus === order.status) return;
+                onCommitStatus(order, newStatus);
               }}
-              disabled={true} // Disabled until mutation is implemented
+              disabled={statusMutationPending}
             />
           );
         },
@@ -217,7 +217,7 @@ export function OrdersTable({
         },
       },
   ],
-    [t, onViewDetails],
+    [t, onViewDetails, onCommitStatus, statusMutationPending],
   );
 
   const table = useReactTable({

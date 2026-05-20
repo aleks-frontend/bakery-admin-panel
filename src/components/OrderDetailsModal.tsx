@@ -8,8 +8,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Order } from "@/types/order"
+import { Order, OrderStatus } from "@/types/order"
 import { StatusBadge } from "./StatusBadge"
+import { StatusDropdown } from "./StatusDropdown"
 import { Separator } from "@/components/ui/separator"
 import { useTranslation } from "react-i18next"
 import { FileDown } from "lucide-react"
@@ -19,12 +20,16 @@ interface OrderDetailsModalProps {
   order: Order | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  onStatusChange?: (newStatus: OrderStatus) => void
+  statusUpdateDisabled?: boolean
 }
 
 export function OrderDetailsModal({
   order,
   open,
   onOpenChange,
+  onStatusChange,
+  statusUpdateDisabled = false,
 }: OrderDetailsModalProps) {
   const { t } = useTranslation()
   const [pdfLoading, setPdfLoading] = useState(false)
@@ -106,7 +111,15 @@ export function OrderDetailsModal({
                 {t("Status")}
               </p>
               <div className="mt-1">
-                <StatusBadge status={currentOrder.status} />
+                {onStatusChange ? (
+                  <StatusDropdown
+                    currentStatus={currentOrder.status}
+                    onStatusChange={onStatusChange}
+                    disabled={statusUpdateDisabled}
+                  />
+                ) : (
+                  <StatusBadge status={currentOrder.status} />
+                )}
               </div>
             </div>
             <div>
