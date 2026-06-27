@@ -1,8 +1,10 @@
 import { useState, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useOrdersQuery } from "@/hooks/useOrdersQuery"
+import { useUpdateOrdersStatusBatchMutation } from "@/hooks/useUpdateOrderStatus"
 import { OrdersTable } from "@/components/OrdersTable"
 import { OrderDetailsModal } from "@/components/OrderDetailsModal"
+import { ManualOrderModal } from "@/components/ManualOrderModal"
 import { Order, OrderStatus } from "@/types/order"
 import { Input } from "@/components/ui/input"
 import {
@@ -17,6 +19,8 @@ import {
   ClipboardList,
   FileSpreadsheet,
   Loader2,
+  Plus,
+  RefreshCw,
   Search,
   Tag,
   X,
@@ -25,11 +29,15 @@ import {
 export function OrdersPage() {
   const { t } = useTranslation()
   const { data: orders = [], isLoading, error } = useOrdersQuery()
+  const batchStatusMutation = useUpdateOrdersStatusBatchMutation()
+
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [selectedOrders, setSelectedOrders] = useState<Order[]>([])
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [isManualOrderModalOpen, setIsManualOrderModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all")
+  const [bulkStatus, setBulkStatus] = useState<OrderStatus | "">("")
   const [workshopPdfLoading, setWorkshopPdfLoading] = useState(false)
   const [xlsLoading, setXlsLoading] = useState(false)
   const [stickersPdfLoading, setStickersPdfLoading] = useState(false)
@@ -37,12 +45,10 @@ export function OrdersPage() {
   const filteredOrders = useMemo(() => {
     let filtered = orders
 
-    // Filter by status
     if (statusFilter !== "all") {
       filtered = filtered.filter((order) => order.status === statusFilter)
     }
 
-    // Filter by search query (recipient or phone)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
@@ -57,12 +63,13 @@ export function OrdersPage() {
 
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order)
-    setIsModalOpen(true)
+    setIsDetailsModalOpen(true)
   }
 
-  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
-    // TODO: Implement when mutation is enabled
-    console.log("Status change:", { orderId, newStatus })
+  const handleBulkStatusUpdate = () => {
+    if (!bulkStatus || !selectedOrders.length) return
+    const updates = selectedOrders.map((o) => ({ orderId: o.orderId, status: bulkStatus as OrderStatus }))
+    batchStatusMutation.mutate(updates)
   }
 
   async function handleGenerateWorkshopList() {
@@ -147,11 +154,17 @@ export function OrdersPage() {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t("Orders")}</h1>
-        <p className="text-muted-foreground">
-          {t("Manage bread and pastry orders")}
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{t("Orders")}</h1>
+          <p className="text-muted-foreground">
+            {t("Manage bread and pastry orders")}
+          </p>
+        </div>
+        <Button onClick={() => setIsManualOrderModalOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          {t("Add Manual Order")}
+        </Button>
       </div>
 
       {/* Filters */}
@@ -159,10 +172,12 @@ export function OrdersPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+            name="search"
             placeholder={t("Search by recipient or phone...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
+            autoComplete="off"
           />
           {searchQuery && (
             <Button
@@ -175,14 +190,19 @@ export function OrdersPage() {
             </Button>
           )}
         </div>
-        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as OrderStatus | "all")}>
+        <Select
+          value={statusFilter}
+          onValueChange={(value) =>
+            setStatusFilter(value as OrderStatus | "all")
+          }
+        >
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder={t("Filter by status")} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("All Statuses")}</SelectItem>
             <SelectItem value="Not received">{t("Not received")}</SelectItem>
-            <SelectItem value="In progress">{t("In progress")}</SelectItem>
+            <SelectItem value="In Progress">{t("In Progress")}</SelectItem>
             <SelectItem value="Delivered">{t("Delivered")}</SelectItem>
           </SelectContent>
         </Select>
@@ -201,7 +221,6 @@ export function OrdersPage() {
         <OrdersTable
           orders={filteredOrders}
           onViewDetails={handleViewDetails}
-          onStatusChange={handleStatusChange}
           onSelectionChange={setSelectedOrders}
         />
       </div>
@@ -213,6 +232,34 @@ export function OrdersPage() {
               {t("{{count}} selected", { count: selectedOrders.length })}
             </p>
             <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+              {/* Bulk status update */}
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={bulkStatus}
+                  onChange={(e) => setBulkStatus(e.target.value as OrderStatus | "")}
+                  className="border border-input rounded-md px-2 py-1.5 text-sm bg-background"
+                >
+                  <option value="">{t("Select status...")}</option>
+                  <option value="Not received">{t("Not received")}</option>
+                  <option value="In Progress">{t("In Progress")}</option>
+                  <option value="Delivered">{t("Delivered")}</option>
+                </select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!bulkStatus || batchStatusMutation.isPending}
+                  onClick={handleBulkStatusUpdate}
+                >
+                  {batchStatusMutation.isPending ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
+                  ) : (
+                    <RefreshCw className="mr-1.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                  )}
+                  {batchStatusMutation.isPending ? t("Updating...") : t("Update Status")}
+                </Button>
+              </div>
+
               <Button
                 type="button"
                 variant="outline"
@@ -276,11 +323,15 @@ export function OrdersPage() {
         </div>
       ) : null}
 
-      {/* Order details modal */}
       <OrderDetailsModal
         order={selectedOrder}
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
+        open={isDetailsModalOpen}
+        onOpenChange={setIsDetailsModalOpen}
+      />
+
+      <ManualOrderModal
+        open={isManualOrderModalOpen}
+        onOpenChange={setIsManualOrderModalOpen}
       />
     </div>
   )

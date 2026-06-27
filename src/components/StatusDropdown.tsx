@@ -16,7 +16,7 @@ interface StatusDropdownProps {
   disabled?: boolean
 }
 
-const allStatuses: OrderStatus[] = ["Not received", "In progress", "Delivered"]
+const allStatuses: OrderStatus[] = ["Not received", "In Progress", "Delivered"]
 
 export function StatusDropdown({
   currentStatus,

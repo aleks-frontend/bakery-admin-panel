@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { updateOrderStatus } from "@/lib/api"
+import { updateOrderStatus, updateOrdersStatusBatch, StatusUpdate } from "@/lib/api"
 import { OrderStatus } from "@/types/order"
 
 export function useUpdateOrderStatusMutation() {
@@ -9,7 +9,17 @@ export function useUpdateOrderStatusMutation() {
     mutationFn: ({ orderId, newStatus }: { orderId: string; newStatus: OrderStatus }) =>
       updateOrderStatus(orderId, newStatus),
     onSuccess: () => {
-      // Invalidate and refetch orders after successful update
+      queryClient.invalidateQueries({ queryKey: ["orders"] })
+    },
+  })
+}
+
+export function useUpdateOrdersStatusBatchMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (updates: StatusUpdate[]) => updateOrdersStatusBatch(updates),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] })
     },
   })

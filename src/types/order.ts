@@ -1,7 +1,7 @@
 import { z } from "zod"
 
 // OrderStatus enum
-export const OrderStatusSchema = z.enum(["Not received", "In progress", "Delivered"])
+export const OrderStatusSchema = z.enum(["Not received", "In Progress", "Delivered"])
 export type OrderStatus = z.infer<typeof OrderStatusSchema>
 
 // ParsedOrderItem schema

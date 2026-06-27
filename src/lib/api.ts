@@ -1,29 +1,22 @@
-import { APIOrderSchema, Order } from "@/types/order"
+import { APIOrderSchema, Order, OrderStatus } from "@/types/order"
 import { mapApiOrderToOrder } from "./orderMapper"
 import { QueryClient } from "@tanstack/react-query"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://n8n.aleksthecoder.com/webhook/bread-orders"
 
-/**
- * Query function for fetching orders from the n8n webhook
- * Validates response using Zod and maps to frontend model
- * Used with TanStack Query's fetchQuery
- */
 export async function fetchOrdersQueryFn(): Promise<Order[]> {
   const response = await fetch(API_BASE_URL)
-  
+
   if (!response.ok) {
     throw new Error(`Failed to fetch orders: ${response.status} ${response.statusText}`)
   }
 
   const data = await response.json()
-  
-  // Validate response is an array
+
   if (!Array.isArray(data)) {
     throw new Error("Invalid API response: expected an array")
   }
 
-  // Validate each order using Zod schema
   const validatedOrders = data.map((item, index) => {
     try {
       return APIOrderSchema.parse(item)
@@ -32,36 +25,93 @@ export async function fetchOrdersQueryFn(): Promise<Order[]> {
     }
   })
 
-  // Map to frontend model
   return validatedOrders.map(mapApiOrderToOrder)
 }
 
-/**
- * Fetches orders using TanStack Query's fetchQuery
- * Provides better caching and integration with React Query
- */
 export async function fetchOrders(queryClient: QueryClient): Promise<Order[]> {
   return queryClient.fetchQuery({
     queryKey: ["orders"],
     queryFn: fetchOrdersQueryFn,
-    staleTime: 30000, // Consider data fresh for 30 seconds
+    staleTime: 30000,
   })
 }
 
-/**
- * Updates order status
- * TODO: Implement n8n webhook call for status updates
- * This will be called when status update functionality is enabled
- */
-export async function updateOrderStatus(
-  orderId: string,
-  newStatus: Order["status"]
-): Promise<void> {
-  // TODO: Implement n8n webhook POST request to update order status
-  // Example: POST https://n8n.aleksthecoder.com/webhook/update-order-status
-  // Body: { orderId, status: newStatus }
+// --- Status update ---
 
-  throw new Error(
-    `Status update not yet implemented (orderId=${orderId}, status=${newStatus})`
-  )
+export type StatusUpdate = { orderId: string; status: OrderStatus }
+
+export async function updateOrdersStatusBatch(updates: StatusUpdate[]): Promise<void> {
+  const url = import.meta.env.VITE_UPDATE_STATUS_URL
+  if (!url) throw new Error("VITE_UPDATE_STATUS_URL is not configured")
+
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ updates }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || !data.success) {
+    throw new Error((data as { error?: string }).error ?? `Failed to update status: ${response.status}`)
+  }
+}
+
+export async function updateOrderStatus(orderId: string, newStatus: OrderStatus): Promise<void> {
+  return updateOrdersStatusBatch([{ orderId, status: newStatus }])
+}
+
+// --- Bread types ---
+
+export type BreadType = { id: string; name: string; price: number }
+export type BreadTypesResponse = { acceptingOrders: boolean; data: BreadType[] }
+
+export async function fetchBreadTypes(): Promise<BreadTypesResponse> {
+  const url = import.meta.env.VITE_BREAD_TYPES_URL
+  if (!url) throw new Error("VITE_BREAD_TYPES_URL is not configured")
+
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch bread types: ${response.status} ${response.statusText}`)
+  }
+
+  return response.json() as Promise<BreadTypesResponse>
+}
+
+// --- Manual order creation ---
+
+export type ManualOrderItem = {
+  breadId: string
+  breadName: string
+  quantity: number
+  unitPrice: number
+}
+
+export type ManualOrderPayload = {
+  customer: { firstName: string; lastName: string; phone: string; email: string }
+  items: ManualOrderItem[]
+  totalPrice: number
+  location: string
+  remark?: string
+}
+
+export async function createManualOrder(payload: ManualOrderPayload): Promise<{ orderId: string }> {
+  const url = import.meta.env.VITE_ADMIN_ORDER_URL
+  if (!url) throw new Error("VITE_ADMIN_ORDER_URL is not configured")
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || !(data as { success?: boolean }).success) {
+    throw new Error(
+      (data as { message?: string }).message ?? `Failed to create order: ${response.status}`
+    )
+  }
+
+  return { orderId: (data as { orderId: string }).orderId }
 }

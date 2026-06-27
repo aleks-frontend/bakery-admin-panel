@@ -20,8 +20,9 @@ import { Button } from "@/components/ui/button";
 import { StatusDropdown } from "./StatusDropdown";
 import { Order, OrderStatus } from "@/types/order";
 import { ArrowUpDown, Eye } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useUpdateOrderStatusMutation } from "@/hooks/useUpdateOrderStatus";
 
 /** Parse API date strings for chronological sorting (ISO, DD.MM.YYYY, Date.parse fallbacks). */
 function parseOrderDateForSort(dateStr: string): number {
@@ -41,7 +42,6 @@ function parseOrderDateForSort(dateStr: string): number {
 interface OrdersTableProps {
   orders: Order[];
   onViewDetails: (order: Order) => void;
-  onStatusChange?: (orderId: string, newStatus: OrderStatus) => void;
   onSelectionChange?: (selectedOrders: Order[]) => void;
 }
 
@@ -85,6 +85,24 @@ export function OrdersTable({
     { id: "date", desc: true },
   ]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const { mutate: updateStatus } = useUpdateOrderStatusMutation();
+
+  const handleStatusChange = useCallback(
+    (orderId: string, newStatus: OrderStatus) => {
+      setUpdatingOrderId(orderId);
+      setStatusError(null);
+      updateStatus(
+        { orderId, newStatus },
+        {
+          onSettled: () => setUpdatingOrderId(null),
+          onError: (err) => setStatusError(err.message),
+        }
+      );
+    },
+    [updateStatus]
+  );
 
   const columns: ColumnDef<Order>[] = useMemo(
     () => [
@@ -187,14 +205,10 @@ export function OrdersTable({
           return (
             <StatusDropdown
               currentStatus={order.status}
-              onStatusChange={(newStatus) => {
-                // TODO: Enable when mutation is implemented
-                console.log("Status change prepared:", {
-                  orderId: order.orderId,
-                  newStatus,
-                });
-              }}
-              disabled={true} // Disabled until mutation is implemented
+              onStatusChange={(newStatus) =>
+                handleStatusChange(order.orderId, newStatus)
+              }
+              disabled={updatingOrderId === order.orderId}
             />
           );
         },
@@ -216,8 +230,8 @@ export function OrdersTable({
           );
         },
       },
-  ],
-    [t, onViewDetails],
+    ],
+    [t, onViewDetails, handleStatusChange, updatingOrderId]
   );
 
   const table = useReactTable({
@@ -239,12 +253,25 @@ export function OrdersTable({
   useEffect(() => {
     if (!onSelectionChange) return;
     const selectedOrders = table.getSelectedRowModel().rows.map(
-      (row) => row.original,
+      (row) => row.original
     );
     onSelectionChange(selectedOrders);
   }, [onSelectionChange, rowSelection, table]);
 
   return (
+    <div className="space-y-2">
+    {statusError && (
+      <div className="flex items-center justify-between rounded-md border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+        <span>{statusError}</span>
+        <button
+          onClick={() => setStatusError(null)}
+          className="ml-4 text-destructive/70 hover:text-destructive"
+          aria-label="Dismiss"
+        >
+          ×
+        </button>
+      </div>
+    )}
     <div className="rounded-md border bg-white">
       <Table>
         <TableHeader>
@@ -262,7 +289,7 @@ export function OrdersTable({
                     ? null
                     : flexRender(
                         header.column.columnDef.header,
-                        header.getContext(),
+                        header.getContext()
                       )}
                 </TableHead>
               ))}
@@ -292,6 +319,7 @@ export function OrdersTable({
           )}
         </TableBody>
       </Table>
+    </div>
     </div>
   );
 }
