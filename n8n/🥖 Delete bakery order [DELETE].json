@@ -1,0 +1,224 @@
+{
+  "name": "🥮 Delete bakery order [DELETE]",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "DELETE",
+        "path": "bakery/orders",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "DELETE"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        0
+      ],
+      "id": "ab42f4cf-1f28-4584-bdba-a8f118c86a40",
+      "name": "Webhook",
+      "webhookId": "84e3a92f-332e-4b07-a58a-28378708de36"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\n\n// Accept { orderIds: [...] } or { orderId: \"...\" }\nlet orderIds = [];\nif (body.orderIds && Array.isArray(body.orderIds)) {\n  orderIds = body.orderIds;\n} else if (body.orderId) {\n  orderIds = [body.orderId];\n} else {\n  return [{ json: { success: false, error: \"Missing orderIds\" } }];\n}\n\nif (orderIds.length === 0) {\n  return [{ json: { success: false, error: \"orderIds array is empty\" } }];\n}\n\nreturn orderIds.map(orderId => ({ json: { orderId } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "56f9699b-8191-4059-8136-01180fb71e70",
+      "name": "Normalize order IDs"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4",
+          "mode": "list",
+          "cachedResultName": "Bread orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Order ID",
+              "lookupValue": "={{ $json.orderId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        0
+      ],
+      "id": "85f32300-15d0-402c-9e4c-60e1135f91bc",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all matched rows, sort by row_number descending\n// so that lower-numbered rows are deleted last (prevents row-shift bugs)\nconst items = $input.all();\nreturn items\n  .sort((a, b) => b.json.row_number - a.json.row_number)\n  .map(item => ({\n    json: {\n      row_number: item.json.row_number,\n      orderId: item.json['Order ID']\n    }\n  }));",
+        "mode": "runOnceForAllItems"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "a9439860-64a3-4eda-aa09-5747a12ae117",
+      "name": "Sort by row number descending"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "value": "1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4",
+          "mode": "list",
+          "cachedResultName": "Bread orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit#gid=0"
+        },
+        "toDelete": "rows",
+        "startIndex": "={{ $json.row_number }}",
+        "amount": 1,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        720,
+        0
+      ],
+      "id": "96d29720-007e-46e7-b1cb-902124207013",
+      "name": "Delete row in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, deletedCount: $('Normalize order IDs').all().length } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        960,
+        0
+      ],
+      "id": "063e7a7e-37b3-4dfc-9a01-57202cf74e69",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize order IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize order IDs": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Sort by row number descending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort by row number descending": {
+      "main": [
+        [
+          {
+            "node": "Delete row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1a06a7e0-0fe0-47f4-be8f-fdc47e0b6a6f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32046c7d7105c211e2259616606f883c8b5cc71035b30bdbb85dfac864d6105f"
+  },
+  "tags": []
+}

@@ -12,19 +12,21 @@ import { Order } from "@/types/order"
 import { StatusBadge } from "./StatusBadge"
 import { Separator } from "@/components/ui/separator"
 import { useTranslation } from "react-i18next"
-import { FileDown } from "lucide-react"
+import { FileDown, Trash2 } from "lucide-react"
 import type { ReceiptPdfLabels } from "@/components/OrderReceiptPdf"
 
 interface OrderDetailsModalProps {
   order: Order | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  onDeleteOrder: (order: Order) => void
 }
 
 export function OrderDetailsModal({
   order,
   open,
   onOpenChange,
+  onDeleteOrder,
 }: OrderDetailsModalProps) {
   const { t } = useTranslation()
   const [pdfLoading, setPdfLoading] = useState(false)
@@ -161,7 +163,7 @@ export function OrderDetailsModal({
           </div>
         </div>
 
-        <DialogFooter className="mt-2 flex w-full flex-col border-t pt-4 sm:flex-col">
+        <DialogFooter className="mt-2 flex w-full flex-col gap-2 border-t pt-4 sm:flex-col sm:space-x-0">
           <Button
             type="button"
             variant="default"
@@ -172,6 +174,16 @@ export function OrderDetailsModal({
           >
             <FileDown className="size-5 shrink-0" aria-hidden />
             {pdfLoading ? t("Generating PDF...") : t("Generate PDF receipt")}
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            size="lg"
+            onClick={() => onDeleteOrder(currentOrder)}
+            className="w-full gap-2.5 font-semibold text-base"
+          >
+            <Trash2 className="size-5 shrink-0" aria-hidden />
+            {t("Delete Order")}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatusDropdown } from "./StatusDropdown";
 import { Order, OrderStatus } from "@/types/order";
-import { ArrowUpDown, Eye } from "lucide-react";
+import { ArrowUpDown, Eye, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useUpdateOrderStatusMutation } from "@/hooks/useUpdateOrderStatus";
@@ -42,6 +42,7 @@ function parseOrderDateForSort(dateStr: string): number {
 interface OrdersTableProps {
   orders: Order[];
   onViewDetails: (order: Order) => void;
+  onDeleteOrder: (order: Order) => void;
   onSelectionChange?: (selectedOrders: Order[]) => void;
 }
 
@@ -78,6 +79,7 @@ function SelectCheckbox({
 export function OrdersTable({
   orders,
   onViewDetails,
+  onDeleteOrder,
   onSelectionChange,
 }: OrdersTableProps) {
   const { t } = useTranslation();
@@ -219,19 +221,29 @@ export function OrdersTable({
         cell: ({ row }) => {
           const order = row.original;
           return (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onViewDetails(order)}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              {t("View details")}
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onViewDetails(order)}
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                {t("View details")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => onDeleteOrder(order)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           );
         },
       },
     ],
-    [t, onViewDetails, handleStatusChange, updatingOrderId]
+    [t, onViewDetails, onDeleteOrder, handleStatusChange, updatingOrderId]
   );
 
   const table = useReactTable({

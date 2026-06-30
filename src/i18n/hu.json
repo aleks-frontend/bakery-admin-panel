@@ -70,5 +70,16 @@
   "Update Status": "Státusz frissítése",
   "Select status...": "Válasszon státuszt...",
   "Updating...": "Frissítés...",
-  "Order created successfully": "Rendelés sikeresen létrehozva"
+  "Order created successfully": "Rendelés sikeresen létrehozva",
+  "Delete Order": "Rendelés törlése",
+  "Delete selected": "Kijelöltek törlése",
+  "Confirm Deletion": "Törlés megerősítése",
+  "This will permanently delete {{entity}} {{id}}.": "Ez véglegesen törli a(z) {{id}} {{entity}}.",
+  "This will permanently delete {{count}} {{entity}}.": "Ez véglegesen törli a(z) {{count}} {{entity}}.",
+  "order": "rendelést",
+  "orders": "rendelést",
+  "This action cannot be undone.": "Ez a művelet nem vonható vissza.",
+  "Cancel": "Mégse",
+  "Delete": "Törlés",
+  "Deleting...": "Törlés..."
 }

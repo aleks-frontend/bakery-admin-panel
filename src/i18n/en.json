@@ -70,5 +70,16 @@
   "Update Status": "Update Status",
   "Select status...": "Select status...",
   "Updating...": "Updating...",
-  "Order created successfully": "Order created successfully"
+  "Order created successfully": "Order created successfully",
+  "Delete Order": "Delete Order",
+  "Delete selected": "Delete selected",
+  "Confirm Deletion": "Confirm Deletion",
+  "This will permanently delete {{entity}} {{id}}.": "This will permanently delete {{entity}} {{id}}.",
+  "This will permanently delete {{count}} {{entity}}.": "This will permanently delete {{count}} {{entity}}.",
+  "order": "order",
+  "orders": "orders",
+  "This action cannot be undone.": "This action cannot be undone.",
+  "Cancel": "Cancel",
+  "Delete": "Delete",
+  "Deleting...": "Deleting..."
 }

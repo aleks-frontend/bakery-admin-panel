@@ -11,6 +11,7 @@ This directory contains all n8n webhook workflows that power the bakery ordering
 | `🥖 Bread types webhook [GET].json` | GET | `/webhook/bread-types` | Returns available bread types and prices, plus the `accepting_orders` flag. |
 | `🥖 Update bakery order status [PATCH].json` | PATCH | `/webhook/bakery/orders/status` | Updates one or more order statuses. Accepts `{ orderId, status }` or `{ updates: [{ orderId, status }] }`. Allowed statuses: `Not received`, `In Progress`, `Delivered`. |
 | `🥖 Admin bakery order [POST].json` | POST | `/webhook/admin/bakery-order` | Admin-only order creation — bypasses the `accepting_orders` check, no email or Telegram notifications. Used by the "Add Manual Order" feature in the admin panel. |
+| `🥖 Delete bakery order [DELETE].json` | DELETE | `/webhook/bakery/orders` | Hard-deletes one or more orders from the Google Sheet. Accepts `{ orderIds: [...] }`. Rows are deleted bottom-to-top to avoid row-number shifting. |
 
 ## Keeping workflows in sync
 

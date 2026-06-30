@@ -115,3 +115,24 @@ export async function createManualOrder(payload: ManualOrderPayload): Promise<{ 
 
   return { orderId: (data as { orderId: string }).orderId }
 }
+
+// --- Order deletion ---
+
+export async function deleteOrders(orderIds: string[]): Promise<void> {
+  const url = import.meta.env.VITE_DELETE_ORDER_URL
+  if (!url) throw new Error("VITE_DELETE_ORDER_URL is not configured")
+
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ orderIds }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || !(data as { success?: boolean }).success) {
+    throw new Error(
+      (data as { error?: string }).error ?? `Failed to delete orders: ${response.status}`
+    )
+  }
+}

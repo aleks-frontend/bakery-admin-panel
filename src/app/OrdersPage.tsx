@@ -5,6 +5,7 @@ import { useUpdateOrdersStatusBatchMutation } from "@/hooks/useUpdateOrderStatus
 import { OrdersTable } from "@/components/OrdersTable"
 import { OrderDetailsModal } from "@/components/OrderDetailsModal"
 import { ManualOrderModal } from "@/components/ManualOrderModal"
+import { DeleteConfirmModal } from "@/components/DeleteConfirmModal"
 import { Order, OrderStatus } from "@/types/order"
 import { Input } from "@/components/ui/input"
 import {
@@ -23,6 +24,7 @@ import {
   RefreshCw,
   Search,
   Tag,
+  Trash2,
   X,
 } from "lucide-react"
 
@@ -35,6 +37,8 @@ export function OrdersPage() {
   const [selectedOrders, setSelectedOrders] = useState<Order[]>([])
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isManualOrderModalOpen, setIsManualOrderModalOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [orderIdsToDelete, setOrderIdsToDelete] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all")
   const [bulkStatus, setBulkStatus] = useState<OrderStatus | "">("")
@@ -70,6 +74,16 @@ export function OrdersPage() {
     if (!bulkStatus || !selectedOrders.length) return
     const updates = selectedOrders.map((o) => ({ orderId: o.orderId, status: bulkStatus as OrderStatus }))
     batchStatusMutation.mutate(updates)
+  }
+
+  const handleDeleteOrder = (order: Order) => {
+    setOrderIdsToDelete([order.orderId])
+    setDeleteConfirmOpen(true)
+  }
+
+  const handleBulkDelete = () => {
+    setOrderIdsToDelete(selectedOrders.map((o) => o.orderId))
+    setDeleteConfirmOpen(true)
   }
 
   async function handleGenerateWorkshopList() {
@@ -221,6 +235,7 @@ export function OrdersPage() {
         <OrdersTable
           orders={filteredOrders}
           onViewDetails={handleViewDetails}
+          onDeleteOrder={handleDeleteOrder}
           onSelectionChange={setSelectedOrders}
         />
       </div>
@@ -259,6 +274,16 @@ export function OrdersPage() {
                   {batchStatusMutation.isPending ? t("Updating...") : t("Update Status")}
                 </Button>
               </div>
+
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={handleBulkDelete}
+              >
+                <Trash2 className="mr-1.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                {t("Delete selected")}
+              </Button>
 
               <Button
                 type="button"
@@ -327,11 +352,21 @@ export function OrdersPage() {
         order={selectedOrder}
         open={isDetailsModalOpen}
         onOpenChange={setIsDetailsModalOpen}
+        onDeleteOrder={handleDeleteOrder}
       />
 
       <ManualOrderModal
         open={isManualOrderModalOpen}
         onOpenChange={setIsManualOrderModalOpen}
+      />
+
+      <DeleteConfirmModal
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        ids={orderIdsToDelete}
+        entitySingular={t("order")}
+        entityPlural={t("orders")}
+        onSuccess={() => setIsDetailsModalOpen(false)}
       />
     </div>
   )

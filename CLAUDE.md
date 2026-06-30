@@ -15,13 +15,14 @@ No test runner is configured.
 
 ## Environment
 
-Copy `.env.example` to `.env` and fill in all four variables:
+Copy `.env.example` to `.env` and fill in all five variables:
 
 ```
-VITE_API_BASE_URL=       # GET  /webhook/bread-orders
-VITE_BREAD_TYPES_URL=    # GET  /webhook/bread-types
-VITE_UPDATE_STATUS_URL=  # PATCH /webhook/bakery/orders/status
-VITE_ADMIN_ORDER_URL=    # POST /webhook/admin/bakery-order
+VITE_API_BASE_URL=        # GET    /webhook/bread-orders
+VITE_BREAD_TYPES_URL=     # GET    /webhook/bread-types
+VITE_UPDATE_STATUS_URL=   # PATCH  /webhook/bakery/orders/status
+VITE_ADMIN_ORDER_URL=     # POST   /webhook/admin/bakery-order
+VITE_DELETE_ORDER_URL=    # DELETE /webhook/bakery/orders
 ```
 
 All webhooks are n8n workflows. See `n8n/README.md` for details.

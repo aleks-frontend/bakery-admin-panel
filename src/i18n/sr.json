@@ -70,5 +70,16 @@
   "Update Status": "Ažuriraj status",
   "Select status...": "Odaberite status...",
   "Updating...": "Ažuriranje...",
-  "Order created successfully": "Porudžbina uspešno kreirana"
+  "Order created successfully": "Porudžbina uspešno kreirana",
+  "Delete Order": "Obriši porudžbinu",
+  "Delete selected": "Obriši odabrane",
+  "Confirm Deletion": "Potvrdi brisanje",
+  "This will permanently delete {{entity}} {{id}}.": "Ovo će trajno obrisati {{entity}} {{id}}.",
+  "This will permanently delete {{count}} {{entity}}.": "Ovo će trajno obrisati {{count}} {{entity}}.",
+  "order": "porudžbinu",
+  "orders": "porudžbine",
+  "This action cannot be undone.": "Ova akcija se ne može poništiti.",
+  "Cancel": "Otkaži",
+  "Delete": "Obriši",
+  "Deleting...": "Brisanje..."
 }
