@@ -1,0 +1,366 @@
+{
+  "name": "🥖 Update bakery order status [PATCH]",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "PATCH",
+        "path": "/bakery/orders/status",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -32,
+        48
+      ],
+      "id": "4c338679-d53e-43ab-8e33-d6c8a98231e4",
+      "name": "Webhook",
+      "webhookId": "fd9b993f-2497-4526-9b76-1d3721099923"
+    },
+    {
+      "parameters": {
+        "jsCode": "const allowedStatuses = [\"Not received\", \"In Progress\", \"Delivered\"];\n\nconst body = $input.first().json.body;\n\n// Normalize input → always array of updates\nlet updates = [];\n\nif (body.updates && Array.isArray(body.updates)) {\n  updates = body.updates;\n} else if (body.orderId && body.status) {\n  updates = [body];\n} else {\n  return [\n    {\n      json: {\n        success: false,\n        error: \"Invalid payload\"\n      }\n    }\n  ];\n}\n\n// Process each update safely\nreturn updates.map((update) => {\n  if (!update.orderId) {\n    return {\n      json: {\n        success: false,\n        error: \"Missing orderId\",\n        orderId: null\n      }\n    };\n  }\n\n  if (!allowedStatuses.includes(update.status)) {\n    return {\n      json: {\n        success: false,\n        orderId: update.orderId,\n        error: `Invalid status: ${update.status}`\n      }\n    };\n  }\n\n  return {\n    json: {\n      success: true,\n      orderId: update.orderId,\n      status: update.status\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        48
+      ],
+      "id": "29a08b18-bef5-4050-91d0-04458aecc5a4",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4",
+          "mode": "list",
+          "cachedResultName": "Bread orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Order ID",
+              "lookupValue": "={{$json.orderId}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        704,
+        -144
+      ],
+      "id": "76a44320-7654-4ce5-a61e-019eb5826b62",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4",
+          "mode": "list",
+          "cachedResultName": "Bread orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Order ID": "={{ $json['Order ID'] }}",
+            "Status": "={{ $('Code in JavaScript').item.json.status }}"
+          },
+          "matchingColumns": [
+            "Order ID"
+          ],
+          "schema": [
+            {
+              "id": "Order ID",
+              "displayName": "Order ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Recipient",
+              "displayName": "Recipient",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Ordered articles",
+              "displayName": "Ordered articles",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Total price",
+              "displayName": "Total price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Remark",
+              "displayName": "Remark",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        928,
+        -112
+      ],
+      "id": "a2a6476b-28bd-4522-b434-76803c8e2b5d",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $('Code in JavaScript').item.json.success ? { success: true, updatedCount: 1 } : { success: false, error: $('Code in JavaScript').item.json.error } }}",
+        "options": {
+          "responseCode": "={{ $('Code in JavaScript').item.json.success ? 200 : 400 }}"
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        816,
+        240
+      ],
+      "id": "0b089e28-f0f1-4275-bb5b-7e7f8440a552",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0cd12864-5866-4aee-8b89-2752472dfff9",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        400,
+        32
+      ],
+      "id": "cf7db4ea-0180-4355-b1e4-cf612e425326",
+      "name": "If"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": [
+          {
+            "updates": [
+              {
+                "orderId": "ORD-1774936833710",
+                "status": "Delivered"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6d8c4484-9367-41fb-a41b-8f3a5f56f288",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32046c7d7105c211e2259616606f883c8b5cc71035b30bdbb85dfac864d6105f"
+  },
+  "id": "jGi41cjYEFD9PKd6",
+  "tags": []
+}

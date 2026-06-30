@@ -1,0 +1,255 @@
+{
+  "name": "🥮 Admin bakery order [POST]",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "admin/bakery-order",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -32,
+        48
+      ],
+      "id": "7b1f5b41-819c-4213-8878-04061071e320",
+      "name": "Webhook",
+      "webhookId": "4a14c222-d1d8-4490-bcc6-9e0a43b9c10c"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\n\nconst { customer, items, totalPrice, location, remark } = body;\n\n// Generate order ID\nconst orderId = `ORD-${Date.now()}`;\n\n// Format date: \"27 Jun 2026, 8:00\"\nconst now = new Date();\nconst months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',\n                 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];\nconst day   = now.getDate();\nconst month = months[now.getMonth()];\nconst year  = now.getFullYear();\nconst hours = now.getHours();\nconst mins  = String(now.getMinutes()).padStart(2, '0');\nconst date  = `${day} ${month} ${year}, ${hours}:${mins}`;\n\n// Format \"Ordered articles\": \"• Bread × qty = total RSD\"\nconst orderedArticles = items\n  .map(item => `• ${item.breadName} × ${item.quantity} = ${item.unitPrice * item.quantity} RSD`)\n  .join('\\n');\n\nconst recipient = `${customer.firstName} ${customer.lastName}`.trim();\n\nreturn [{\n  json: {\n    orderId,\n    recipient,\n    phone: String(customer.phone || ''),\n    email: customer.email || '',\n    date,\n    location,\n    orderedArticles,\n    totalPrice: Number(totalPrice),\n    status: 'Not received',\n    remark: remark || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        48
+      ],
+      "id": "e53822af-8909-42f4-b7dc-75cf31047633",
+      "name": "Prepare order data"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4",
+          "mode": "list",
+          "cachedResultName": "Bread orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Order ID": "={{ $json.orderId }}",
+            "Recipient": "={{ $json.recipient }}",
+            "Phone": "={{ $json.phone }}",
+            "Email": "={{ $json.email }}",
+            "Date": "={{ $json.date }}",
+            "Location": "={{ $json.location }}",
+            "Ordered articles": "={{ $json.orderedArticles }}",
+            "Total price": "={{ $json.totalPrice }}",
+            "Status": "={{ $json.status }}",
+            "Remark": "={{ $json.remark }}"
+          },
+          "matchingColumns": [
+            "Order ID"
+          ],
+          "schema": [
+            {
+              "id": "Order ID",
+              "displayName": "Order ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recipient",
+              "displayName": "Recipient",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ordered articles",
+              "displayName": "Ordered articles",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total price",
+              "displayName": "Total price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Remark",
+              "displayName": "Remark",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        480,
+        48
+      ],
+      "id": "c810ef6e-4c73-4fc7-9ad0-5c7bbe0c362e",
+      "name": "Add order to Orders sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, orderId: $('Prepare order data').item.json.orderId } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        720,
+        48
+      ],
+      "id": "28cf4846-8367-4e63-8827-e669a35be4e0",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare order data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare order data": {
+      "main": [
+        [
+          {
+            "node": "Add order to Orders sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add order to Orders sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "612fca5e-edca-42bc-85ac-bfbfe9144f85",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32046c7d7105c211e2259616606f883c8b5cc71035b30bdbb85dfac864d6105f"
+  },
+  "tags": []
+}

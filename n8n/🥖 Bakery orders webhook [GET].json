@@ -1,0 +1,137 @@
+{
+  "name": "🥖 Bakery orders webhook [GET]",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "bread-orders",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -464,
+        0
+      ],
+      "id": "8accdd91-4cd5-45d6-bf5f-ed4c1545ac6e",
+      "name": "Webhook",
+      "webhookId": "dd90dd53-7d78-463c-8859-14f508d8e777"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4",
+          "mode": "list",
+          "cachedResultName": "Bread orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -256,
+        0
+      ],
+      "id": "3b90a130-d285-4d37-95e0-3861f9b33b89",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// items = rows coming from Google Sheets node\nconst rows = $input.all()\n  .map(item => item.json)\n\nreturn [\n  {\n    json: {\n      data: rows\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        0
+      ],
+      "id": "c305e61d-bb5f-4a18-9dca-161b24d5d546",
+      "name": "Format Bread Orders"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        160,
+        0
+      ],
+      "id": "035c13e8-df48-4a49-aeea-8a731898b817",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Format Bread Orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Bread Orders": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b724d84f-6ae2-465f-8848-148c70b01646",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32046c7d7105c211e2259616606f883c8b5cc71035b30bdbb85dfac864d6105f"
+  },
+  "id": "RkzSe5MSTSO3mLu1",
+  "tags": [
+    {
+      "updatedAt": "2026-01-26T16:36:27.524Z",
+      "createdAt": "2026-01-26T16:36:27.524Z",
+      "id": "KAzc7O3iFXwbjMpT",
+      "name": "Zoli"
+    }
+  ]
+}

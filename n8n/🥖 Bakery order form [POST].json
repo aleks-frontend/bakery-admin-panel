@@ -1,0 +1,864 @@
+{
+  "name": "🥖 Bakery order form [POST]",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bakery-order",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -656,
+        -32
+      ],
+      "id": "4acac2da-4116-4cf3-b57e-86af72691ad8",
+      "name": "Webhook",
+      "webhookId": "a5bfa179-7dd5-4a2f-964c-93ff85f004ac"
+    },
+    {
+      "parameters": {
+        "jsCode": "const order = $('Webhook').first().json.body;\nconst breadRows = $input.all().map(i => i.json);\n\n// Build lookup table\nconst breadMap = {};\nbreadRows.forEach(b => {\n  if (b.available === true) {\n    breadMap[b.id] = {\n      name: b.name,\n      price: Number(b.price)\n    };\n  }\n});\n\n// Validate items\nlet total = 0;\nconst orderedArticlesText = [];\n\norder.items.forEach(item => {\n  const bread = breadMap[item.breadId];\n  if (!bread) {\n    console.log(item, \"item with error\")\n    throw new Error(`Bread not available: ${item.breadId}`);\n  }\n\n  const itemTotal = bread.price * item.quantity;\n  total += itemTotal;\n\n  orderedArticlesText.push(\n    `• ${bread.name} × ${item.quantity} = ${itemTotal} RSD`\n  );\n});\n\nreturn [\n  {\n    json: {\n      orderId: `ORD-${Date.now()}`,\n      recipient: `${order.customer.firstName} ${order.customer.lastName}`,\n      phone: order.customer.phone,\n      location: order.location\n        ? order.location.charAt(0).toUpperCase() + order.location.slice(1)\n        : order.location,\n      date: new Date().toLocaleString(\"en-GB\", {\n        day: \"2-digit\",\n        month: \"short\",\n        year: \"numeric\",\n        hour: \"2-digit\",\n        minute: \"2-digit\",\n      }),\n      orderedArticles: orderedArticlesText.join('\\n'),\n      totalPrice: total,\n      status: \"Not received\",\n      customerEmail: order.customer.email || null,\n      remark: order.remark,\n      language: order.language\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        -160
+      ],
+      "id": "3f2894b6-c0fa-4777-84d5-bbfa75dbb3f4",
+      "name": "Validate prices and availability"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": true,\n  \"orderId\": \"{{$json.orderId}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        752,
+        -160
+      ],
+      "id": "264a5045-89a3-4259-a808-9ee2b17565b0",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "chatId": "6441699617",
+        "text": "={{ $json.message }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1376,
+        160
+      ],
+      "id": "f071308d-9bed-428d-b67b-e5d11c3a3f96",
+      "name": "Send a text message to ZOLI",
+      "webhookId": "1f02eba3-b2ff-4697-9152-78dc9900e926",
+      "credentials": {
+        "telegramApi": {
+          "id": "zyYdNrKlR4jpU9MW",
+          "name": "Zoli Bakery Order"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f8f51d8c-2f19-4347-8806-ba15236124d9",
+              "leftValue": "={{ $('Validate prices and availability').item.json.customerEmail }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        -240
+      ],
+      "id": "a6f2894c-e238-43d6-abec-6d60c5cd1551",
+      "name": "Email is not empty"
+    },
+    {
+      "parameters": {
+        "jsCode": "const order = $input.first().json;\n\n// Podeli naručene artikle po znaku \"•\", ukloni razmake i prazne vrednosti\nconst articles = $('Validate prices and availability').first().json.orderedArticles\n  .split(\"•\")\n  .map(a => a.trim())\n  .filter(Boolean);\n\n// Google Sheet link\nconst sheetLink = \"https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit?gid=0#gid=0\";\n\n// Formiranje teksta poruke\nconst message = [\n  \"🛒 *Nova porudžbina je primljena!*\",\n  \"\",\n  \"📊 *Nova porudžbina je dodata u vaš Google Sheet sa porudžbinama.*\",\n  `👉 [Otvori Google Sheet](${sheetLink})`,\n  \"\",\n  `👤 Naručilac: *${order.Recipient}*`,\n  `📅 Datum: ${order.Date}`,\n  `📍 Lokacija preuzimanja: ${order.Location}`,\n  \"\",\n  \"📦 *Naručeni artikli:*\",\n  ...articles.map(a => `• ${a}`),\n  \"\",\n  `💰 Ukupna cena: *${order[\"Total price\"]} RSD*`,\n  \"\",\n  \"⏳ Molimo proverite detalje i pripremite porudžbinu na vreme.\"\n].join(\"\\n\");\n\nreturn [\n  {\n    json: {\n      message\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1136,
+        160
+      ],
+      "id": "8b43d125-53e7-48ca-98ab-e3b49c8fad4a",
+      "name": "Format message for Telegram for Zoli"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ff2e65c6-54b4-44ef-8963-1e54de62a73d",
+              "leftValue": "={{ $('Validate prices and availability').item.json.language }}",
+              "rightValue": "hu",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1840,
+        -464
+      ],
+      "id": "bdd72e6b-5d8d-470d-8ec0-8dcea2394535",
+      "name": "If language is Hungarian"
+    },
+    {
+      "parameters": {
+        "fromEmail": "order@lisztrapszodia.in.rs",
+        "toEmail": "={{ $('Validate prices and availability').item.json.customerEmail }}",
+        "subject": "Potvrda porudžbine – Liszt Rapszodia",
+        "html": "=Poštovani/a {{ $('Validate prices and availability').item.json.recipient }},<br/><br/>\n\nHvala vam na porudžbini!<br/><br/>\n\nVaša narudžbina je uspešno primljena i u obradi je.<br/><br/>\n\n{{ $json.detalji_porudzbine }}<br/><br/>\n\nUkupan iznos: <strong>{{ $('Validate prices and availability').item.json.totalPrice }}</strong> RSD<br/><br/>\n\nUkoliko bude bilo kakvih nejasnoća ili potrebe za dodatnim informacijama, kontaktiraćemo vas na broj telefona koji ste ostavili.<br/><br/>\n\nHvala vam na poverenju i radujemo se što ćemo pripremiti sveže proizvode za vas.<br/><br/>\n\nSrdačan pozdrav,<br/>\n🎼 Liszt Rapszodia<br/>\n📧 order@lisztrapszodia.in.rs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2080,
+        -368
+      ],
+      "id": "9480a862-ea3d-416a-b909-40ffbe50b8ad",
+      "name": "Send email - SRB",
+      "webhookId": "093e4988-9e5d-48c7-8303-08fea5ebf85c",
+      "credentials": {
+        "smtp": {
+          "id": "XbsOCm9OCABY4rdS",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "order@lisztrapszodia.in.rs",
+        "toEmail": "={{ $('Validate prices and availability').item.json.customerEmail }}",
+        "subject": "Rendelés visszaigazolása – Liszt Rapszodia",
+        "html": "=Tisztelt {{ $('Validate prices and availability').item.json.recipient }},<br/><br/>\n\nKöszönjük rendelését!<br/><br/>\n\nRendelését sikeresen megkaptuk, és feldolgozás alatt áll.<br/><br/>\n\n{{ $json.detalji_porudzbine }}<br/><br/>\n\nVégösszeg: <strong>{{ $('Validate prices and availability').item.json.totalPrice }}</strong> RSD<br/><br/>\n\nAmennyiben bármilyen kérdés vagy további információra lenne szükség, felvesszük Önnel a kapcsolatot a megadott telefonszámon.<br/><br/>\n\nKöszönjük bizalmát, és örömmel készítjük el Önnek a friss termékeket.<br/><br/>\n\nÜdvözlettel,<br/>\n🎼 Liszt Rapszodia<br/>\n📧 order@lisztrapszodia.in.rs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2080,
+        -544
+      ],
+      "id": "54909219-861e-421e-a115-795299c5d030",
+      "name": "Send email - HUN",
+      "webhookId": "093e4988-9e5d-48c7-8303-08fea5ebf85c",
+      "credentials": {
+        "smtp": {
+          "id": "XbsOCm9OCABY4rdS",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function getNextFirstFriday(fromDate = new Date()) {\n  const date = new Date(fromDate);\n  date.setHours(0, 0, 0, 0);\n\n  // Prelazimo na sledeći mesec ako smo već posle prvog petka\n  const year = date.getFullYear();\n  let month = date.getMonth();\n\n  function firstFriday(year, month) {\n    const d = new Date(year, month, 1);\n    const day = d.getDay(); // 0=Sun, 5=Fri\n    const offset = (5 - day + 7) % 7;\n    d.setDate(1 + offset);\n    return d;\n  }\n\n  let friday = firstFriday(year, month);\n  if (friday <= date) {\n    month += 1;\n    friday = firstFriday(year, month);\n  }\n\n  return friday.toISOString().split(\"T\")[0]; // YYYY-MM-DD\n}\n\nreturn [\n  {\n    json: {\n      reminderDate: getNextFirstFriday(),\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        -144
+      ],
+      "id": "7479993d-ccdf-4b22-be45-3019c786116b",
+      "name": "Calculate reminder date"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": false,\n  \"message\": \"Orders for this week are closed. New orders open on Friday.\"\n}",
+        "options": {
+          "responseCode": 409
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        352,
+        192
+      ],
+      "id": "b6a6b60b-6f45-4509-8dcd-40013961a9d9",
+      "name": "Failure response - not accepting orders"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cef17fc5-3e0a-43e1-bc6d-05586386c62c",
+              "leftValue": "={{ $json.accepting_orders }}",
+              "rightValue": "=true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        32,
+        -32
+      ],
+      "id": "d7afeb52-996d-4010-9451-e3c55c477f2a",
+      "name": "Is accepting orders"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json);\n\nconst config = rows.find(r => r.id === 'CONFIG');\n\nif (!config) {\n  throw new Error('CONFIG row missing');\n}\n\nreturn rows.map(r => ({\n  json: {\n    ...r,\n    accepting_orders: config.accepting_orders\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -176,
+        -32
+      ],
+      "id": "04d34095-3420-468f-b465-fd7a3f2958fc",
+      "name": "Get config from rows"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Uzimamo podatke iz prethodnih node-ova\nconst order = $input.first().json;\n\n// Ordered articles dolaze iz Validate node-a\nconst orderedArticlesRaw = $('Validate prices and availability')\n  .first()\n  .json\n  .orderedArticles;\n\n// Razdvajamo artikle po \"•\"\nconst articles = orderedArticlesRaw\n  .split(\"•\")\n  .map(a => a.trim())\n  .filter(Boolean);\n\n// Formiramo lep email tekst (bez markdown-a)\nconst orderDetailsText = [\n  ...articles.map(a => `• ${a}`),\n].join(\"<br />\");\n\n// Vraćamo vrednosti koje ćeš koristiti u Gmail node-u\nreturn [\n  {\n    json: {\n      detalji_porudzbine: orderDetailsText,\n      ukupan_iznos: order[\"Total price\"],\n      ime: order.Recipient\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        -464
+      ],
+      "id": "8cacd388-800a-4155-a8ce-e708d28179b6",
+      "name": "Prepare email details"
+    },
+    {
+      "parameters": {
+        "fromEmail": "order@lisztrapszodia.in.rs",
+        "toEmail": "={{ $('Email is not empty').item.json.Email }}",
+        "subject": "={{ $json.subject }}",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2000,
+        -768
+      ],
+      "id": "44af0928-2b93-4e7e-a915-5868c613ea3c",
+      "name": "Send email",
+      "webhookId": "37ffb0d5-3671-4821-a8dc-abb9a4d28c9b",
+      "credentials": {
+        "smtp": {
+          "id": "XbsOCm9OCABY4rdS",
+          "name": "SMTP account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const row = $input.first().json;\n\nconst recipient = row.recipient || \"\";\nconst lang = (row.Language || \"sr\").toLowerCase();\nconst orderDetails = row.detalji_porudzbine || \"\";\nconst totalPrice = row.totalPrice || \"\";\n\nconst orderLink = row.orderLink || \"https://order.lisztrapszodia.in.rs/\"; // može da vodi na stranicu sa porudžbinom\n\nlet subject = \"\";\nlet intro = \"\";\nlet closing = \"\";\nlet buttonText = \"\";\n\nif (lang === \"hu\") {\n  subject = \"Rendelés megerősítve – Liszt Rapszodia\";\n\n  intro = `Tisztelt ${recipient},<br/><br/>\nKöszönjük rendelését!<br/>\nRendelését sikeresen megkaptuk, és feldolgozás alatt áll.`;\n\n  buttonText = \"Rendelés megtekintése\";\n\n  closing = `\nAmennyiben bármilyen kérdés vagy további információra lenne szükség, felvesszük Önnel a kapcsolatot a megadott telefonszámon.<br/><br/>\nKöszönjük bizalmát, és örömmel készítjük el Önnek a friss termékeket.<br/><br/>\nÜdvözlettel,<br/>\n🎼 <strong>Liszt Rapszodia</strong><br/>\n📧 order@lisztrapszodia.in.rs\n`;\n\n} \nelse if (lang === \"en\") {\n  subject = \"Order Confirmation – Liszt Rapszodia\";\n\n  intro = `Dear ${recipient},<br/><br/>\nThank you for your order!<br/>\nWe have successfully received your order and it is now being processed.`;\n\n  buttonText = \"View Order\";\n\n  closing = `\nIf you have any questions or need further information, we will contact you at the provided phone number.<br/><br/>\nThank you for your trust, and we look forward to preparing fresh products for you.<br/><br/>\nBest regards,<br/>\n🎼 <strong>Liszt Rapszodia</strong><br/>\n📧 order@lisztrapszodia.in.rs\n`;\n\n} \nelse {\n  subject = \"Potvrda porudžbine – Liszt Rapszodia\";\n\n  intro = `Poštovani/a ${recipient},<br/><br/>\nHvala na vašoj porudžbini!<br/>\nVaša porudžbina je uspešno primljena i u obradi je.`;\n\n  buttonText = \"Pogledaj porudžbinu\";\n\n  closing = `\nUkoliko imate bilo kakvih pitanja ili trebate dodatne informacije, kontaktiraćemo vas na datom broju telefona.<br/><br/>\nHvala na poverenju i radujemo se da vam pripremimo sveže proizvode.<br/><br/>\nSrdačan pozdrav,<br/>\n🎼 <strong>Liszt Rapszodia</strong><br/>\n📧 order@lisztrapszodia.in.rs\n`;\n\n}\n\nconst html = `\n<div style=\"font-family:Arial,Helvetica,sans-serif;background:#f7f7f7;padding:30px;\">\n  <div style=\"max-width:520px;margin:auto;background:white;border-radius:10px;padding:30px;border:1px solid #eee;\">\n\n    <h2 style=\"margin-top:0;color:#333;\">🎼 Liszt Rapszodia</h2>\n\n    <p style=\"font-size:15px;color:#444;line-height:1.6;\">\n      ${intro}\n    </p>\n\n    <div style=\"margin:20px 0;padding:15px;border:1px solid #eee;border-radius:8px;background:#fafafa;\">\n      ${orderDetails}\n      <p style=\"font-weight:bold;margin-top:10px;\">Végösszeg / Total: <strong>${totalPrice} RSD</strong></p>\n    </div>\n\n    <div style=\"text-align:center;margin:25px 0;\">\n      <a href=\"${orderLink}\" \n         style=\"\n         background:#b8860b;\n         color:white;\n         padding:14px 24px;\n         text-decoration:none;\n         border-radius:8px;\n         font-size:16px;\n         font-weight:bold;\n         display:inline-block;\">\n         ${buttonText}\n      </a>\n    </div>\n\n    <p style=\"font-size:14px;color:#444;line-height:1.6;\">\n      ${closing}\n    </p>\n\n    <hr style=\"border:none;border-top:1px solid #eee;margin:25px 0;\">\n\n    <p style=\"font-size:12px;color:#888;\">\n      🎼 Liszt Rapszodia<br/>\n      📧 order@lisztrapszodia.in.rs\n    </p>\n\n  </div>\n</div>\n`;\n\nreturn [\n  {\n    json: {\n      email: row.Email,\n      subject,\n      html\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        -768
+      ],
+      "id": "405d3f28-a06c-4886-bb24-b568b4a6b93f",
+      "name": "Format subject and email body",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "content": "## Telegram confirmation for Zoli\n",
+        "height": 256,
+        "width": 528,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        96
+      ],
+      "id": "2eead29f-35f6-4934-949d-00ae8fe9f9cf",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1IZ5nrS5P2NHeUBfVxSUhd548KYVxJgn0CliclQqALj8",
+          "mode": "list",
+          "cachedResultName": "Bread order reminders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IZ5nrS5P2NHeUBfVxSUhd548KYVxJgn0CliclQqALj8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IZ5nrS5P2NHeUBfVxSUhd548KYVxJgn0CliclQqALj8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Reminder date": "={{ $json.reminderDate }}",
+            "Email": "={{ $('Validate prices and availability').item.json.customerEmail }}",
+            "Name": "={{ $('Validate prices and availability').item.json.recipient }}",
+            "Language": "={{ $('Validate prices and availability').item.json.language }}",
+            "Sent": "No",
+            "Previous order ID": "={{ $('Respond to Webhook').item.json['Order ID'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Previous order ID",
+              "displayName": "Previous order ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reminder date",
+              "displayName": "Reminder date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Language",
+              "displayName": "Language",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sent",
+              "displayName": "Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1744,
+        -144
+      ],
+      "id": "edb89717-92d4-4214-9804-f1ece01d2e0f",
+      "name": "Add order to reminders sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4",
+          "mode": "list",
+          "cachedResultName": "Bread orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Order ID": "={{ $json.orderId }}",
+            "Recipient": "={{ $json.recipient }}",
+            "Phone": "={{ $json.phone }}",
+            "Date": "={{ $json.date }}",
+            "Location": "={{ $json.location }}",
+            "Ordered articles": "={{ $json.orderedArticles }}",
+            "Total price": "={{ $json.totalPrice }}",
+            "Status": "={{ $json.status }}",
+            "Remark": "={{ $json.remark }}",
+            "Email": "={{ $json.customerEmail }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Order ID",
+              "displayName": "Order ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recipient",
+              "displayName": "Recipient",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Ordered articles",
+              "displayName": "Ordered articles",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total price",
+              "displayName": "Total price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Remark",
+              "displayName": "Remark",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        560,
+        -160
+      ],
+      "id": "c5c5bd9b-8133-479e-b65f-7d326b2d3a5d",
+      "name": "Add order to Orders sheet",
+      "retryOnFail": true,
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Adding new order to orders sheet\nValidating prices, adding to orders sheet and sending response to webhook",
+        "height": 320,
+        "width": 576
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        320,
+        -272
+      ],
+      "id": "f651f41c-b6cd-4e6b-9bed-4c9a3d1b77b7",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A",
+          "mode": "list",
+          "cachedResultName": "Bread types",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -368,
+        -32
+      ],
+      "id": "ca11beb4-b6c6-479c-be24-1b5cefcf71aa",
+      "name": "Get bread types and availability",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Prepare and send email to customer\n",
+        "height": 624,
+        "width": 784,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        -832
+      ],
+      "id": "33d41fbe-1d71-44cd-86b2-1b9531fe46a7",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get bread types and availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate prices and availability": {
+      "main": [
+        [
+          {
+            "node": "Add order to Orders sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Format message for Telegram for Zoli",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Email is not empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email is not empty": {
+      "main": [
+        [
+          {
+            "node": "Prepare email details",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Calculate reminder date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format message for Telegram for Zoli": {
+      "main": [
+        [
+          {
+            "node": "Send a text message to ZOLI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If language is Hungarian": {
+      "main": [
+        [
+          {
+            "node": "Send email - HUN",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send email - SRB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate reminder date": {
+      "main": [
+        [
+          {
+            "node": "Add order to reminders sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is accepting orders": {
+      "main": [
+        [
+          {
+            "node": "Validate prices and availability",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Failure response - not accepting orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get config from rows": {
+      "main": [
+        [
+          {
+            "node": "Is accepting orders",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare email details": {
+      "main": [
+        [
+          {
+            "node": "If language is Hungarian",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Format subject and email body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format subject and email body": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add order to Orders sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get bread types and availability": {
+      "main": [
+        [
+          {
+            "node": "Get config from rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e9ab4962-66e7-4375-9d96-c2b36fecea21",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32046c7d7105c211e2259616606f883c8b5cc71035b30bdbb85dfac864d6105f"
+  },
+  "id": "iQQVUdYvSpCNVX01",
+  "tags": []
+}

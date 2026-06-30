@@ -1,0 +1,150 @@
+{
+  "name": "🥖 Bread types webhook [GET]",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "bread-types",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "0aa9a876-3eb3-444b-9a9c-26c731b23980",
+      "name": "Webhook - Bread Types",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1840,
+        256
+      ],
+      "webhookId": "bread-types"
+    },
+    {
+      "parameters": {
+        "jsCode": "// items = rows coming from Google Sheets node\nconst rows = $input.all()\n  .map(item => item.json)\n\n// 1. Find config row\nconst configRow = rows.find(\n  r => r.id === \"CONFIG\"\n);\n\nconst acceptingOrders =\n  configRow &&\n  String(configRow.accepting_orders).toLowerCase() === \"true\";\n\nconst breads = rows\n  .filter(row => row.id !== \"CONFIG\" && Boolean(row.available) === true)\n  .map(row => ({\n    id: row.id,\n    name: row.name,\n    price: Number(row.price)\n  }));\n\nreturn [\n  {\n    json: {\n      acceptingOrders,\n      data: breads\n    }\n  }\n];\n"
+      },
+      "id": "ffe90a0c-6505-4ca9-a13b-22c729d0918b",
+      "name": "Code - Bread Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1024,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "cdbbe554-a13a-4579-b232-1c816fa6f292",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A",
+          "mode": "list",
+          "cachedResultName": "Bread types",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A/edit#gid=0"
+        },
+        "options": {
+          "outputFormatting": {
+            "values": {
+              "general": "UNFORMATTED_VALUE",
+              "date": "FORMATTED_STRING"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1456,
+        272
+      ],
+      "id": "b062ba27-0fcb-4fe0-9468-80e0bfa6cc07",
+      "name": "Get row(s) in sheet",
+      "retryOnFail": true,
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Bread Types": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Bread Data": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code - Bread Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fbaff5c1-a911-47c9-aada-ec95f2a44932",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32046c7d7105c211e2259616606f883c8b5cc71035b30bdbb85dfac864d6105f"
+  },
+  "id": "YrqrlKocg3jW5k4l",
+  "tags": [
+    {
+      "updatedAt": "2026-01-26T16:36:27.524Z",
+      "createdAt": "2026-01-26T16:36:27.524Z",
+      "id": "KAzc7O3iFXwbjMpT",
+      "name": "Zoli"
+    }
+  ]
+}
