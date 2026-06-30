@@ -15,10 +15,16 @@ No test runner is configured.
 
 ## Environment
 
-Copy `.env.example` to `.env` and set:
+Copy `.env.example` to `.env` and fill in all four variables:
+
 ```
-VITE_API_BASE_URL=https://n8n.aleksthecoder.com/webhook/bread-orders
+VITE_API_BASE_URL=       # GET  /webhook/bread-orders
+VITE_BREAD_TYPES_URL=    # GET  /webhook/bread-types
+VITE_UPDATE_STATUS_URL=  # PATCH /webhook/bakery/orders/status
+VITE_ADMIN_ORDER_URL=    # POST /webhook/admin/bakery-order
 ```
+
+All webhooks are n8n workflows. See `n8n/README.md` for details.
 
 ## Architecture
 
@@ -42,6 +48,7 @@ The API returns snake_case with unusual keys like `"Order ID"` and `"Ordered art
 | Page | `src/app/OrdersPage.tsx` | Search, status filter, selection state, export triggers |
 | Components | `src/components/` | Table, modals, PDF renderers, shadcn/ui primitives in `ui/` |
 | i18n | `src/i18n/` | i18next init + `en.json`, `sr.json`, `hu.json` |
+| n8n workflows | `n8n/` | Backend webhook definitions — import into n8n to run the system |
 
 ## Key conventions
 
@@ -54,6 +61,5 @@ The API returns snake_case with unusual keys like `"Order ID"` and `"Ordered art
 
 ## Known incomplete features
 
-- `useUpdateOrderStatus.ts` exists but the mutation is not wired up; the status dropdown in the table is disabled pending a POST endpoint on the n8n side.
 - No pagination (planned for large order lists).
 - No date-range filter (planned).
