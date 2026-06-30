@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatusDropdown } from "./StatusDropdown";
 import { Order, OrderStatus } from "@/types/order";
-import { ArrowUpDown, Eye, Trash2 } from "lucide-react";
+import { Archive, ArrowUpDown, Eye, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useUpdateOrderStatusMutation } from "@/hooks/useUpdateOrderStatus";
@@ -43,6 +43,7 @@ interface OrdersTableProps {
   orders: Order[];
   onViewDetails: (order: Order) => void;
   onDeleteOrder: (order: Order) => void;
+  onArchiveOrder: (order: Order) => void;
   onSelectionChange?: (selectedOrders: Order[]) => void;
 }
 
@@ -80,6 +81,7 @@ export function OrdersTable({
   orders,
   onViewDetails,
   onDeleteOrder,
+  onArchiveOrder,
   onSelectionChange,
 }: OrdersTableProps) {
   const { t } = useTranslation();
@@ -233,6 +235,14 @@ export function OrdersTable({
               <Button
                 variant="ghost"
                 size="sm"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={() => onArchiveOrder(order)}
+              >
+                <Archive className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={() => onDeleteOrder(order)}
               >
@@ -243,7 +253,7 @@ export function OrdersTable({
         },
       },
     ],
-    [t, onViewDetails, onDeleteOrder, handleStatusChange, updatingOrderId]
+    [t, onViewDetails, onDeleteOrder, onArchiveOrder, handleStatusChange, updatingOrderId]
   );
 
   const table = useReactTable({

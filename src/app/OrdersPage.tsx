@@ -6,6 +6,7 @@ import { OrdersTable } from "@/components/OrdersTable"
 import { OrderDetailsModal } from "@/components/OrderDetailsModal"
 import { ManualOrderModal } from "@/components/ManualOrderModal"
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal"
+import { ArchiveConfirmModal } from "@/components/ArchiveConfirmModal"
 import { Order, OrderStatus } from "@/types/order"
 import { Input } from "@/components/ui/input"
 import {
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import {
+  Archive,
   ClipboardList,
   FileSpreadsheet,
   Loader2,
@@ -39,6 +41,8 @@ export function OrdersPage() {
   const [isManualOrderModalOpen, setIsManualOrderModalOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [orderIdsToDelete, setOrderIdsToDelete] = useState<string[]>([])
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false)
+  const [orderIdsToArchive, setOrderIdsToArchive] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all")
   const [bulkStatus, setBulkStatus] = useState<OrderStatus | "">("")
@@ -84,6 +88,16 @@ export function OrdersPage() {
   const handleBulkDelete = () => {
     setOrderIdsToDelete(selectedOrders.map((o) => o.orderId))
     setDeleteConfirmOpen(true)
+  }
+
+  const handleArchiveOrder = (order: Order) => {
+    setOrderIdsToArchive([order.orderId])
+    setArchiveConfirmOpen(true)
+  }
+
+  const handleBulkArchive = () => {
+    setOrderIdsToArchive(selectedOrders.map((o) => o.orderId))
+    setArchiveConfirmOpen(true)
   }
 
   async function handleGenerateWorkshopList() {
@@ -236,6 +250,7 @@ export function OrdersPage() {
           orders={filteredOrders}
           onViewDetails={handleViewDetails}
           onDeleteOrder={handleDeleteOrder}
+          onArchiveOrder={handleArchiveOrder}
           onSelectionChange={setSelectedOrders}
         />
       </div>
@@ -275,6 +290,15 @@ export function OrdersPage() {
                 </Button>
               </div>
 
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleBulkArchive}
+              >
+                <Archive className="mr-1.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                {t("Archive selected")}
+              </Button>
               <Button
                 type="button"
                 variant="destructive"
@@ -353,6 +377,7 @@ export function OrdersPage() {
         open={isDetailsModalOpen}
         onOpenChange={setIsDetailsModalOpen}
         onDeleteOrder={handleDeleteOrder}
+        onArchiveOrder={handleArchiveOrder}
       />
 
       <ManualOrderModal
@@ -364,6 +389,15 @@ export function OrdersPage() {
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
         ids={orderIdsToDelete}
+        entitySingular={t("order")}
+        entityPlural={t("orders")}
+        onSuccess={() => setIsDetailsModalOpen(false)}
+      />
+
+      <ArchiveConfirmModal
+        open={archiveConfirmOpen}
+        onOpenChange={setArchiveConfirmOpen}
+        ids={orderIdsToArchive}
         entitySingular={t("order")}
         entityPlural={t("orders")}
         onSuccess={() => setIsDetailsModalOpen(false)}

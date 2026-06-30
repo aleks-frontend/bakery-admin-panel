@@ -12,7 +12,7 @@ import { Order } from "@/types/order"
 import { StatusBadge } from "./StatusBadge"
 import { Separator } from "@/components/ui/separator"
 import { useTranslation } from "react-i18next"
-import { FileDown, Trash2 } from "lucide-react"
+import { Archive, FileDown, Trash2 } from "lucide-react"
 import type { ReceiptPdfLabels } from "@/components/OrderReceiptPdf"
 
 interface OrderDetailsModalProps {
@@ -20,6 +20,7 @@ interface OrderDetailsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onDeleteOrder: (order: Order) => void
+  onArchiveOrder: (order: Order) => void
 }
 
 export function OrderDetailsModal({
@@ -27,6 +28,7 @@ export function OrderDetailsModal({
   open,
   onOpenChange,
   onDeleteOrder,
+  onArchiveOrder,
 }: OrderDetailsModalProps) {
   const { t } = useTranslation()
   const [pdfLoading, setPdfLoading] = useState(false)
@@ -174,6 +176,16 @@ export function OrderDetailsModal({
           >
             <FileDown className="size-5 shrink-0" aria-hidden />
             {pdfLoading ? t("Generating PDF...") : t("Generate PDF receipt")}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={() => onArchiveOrder(currentOrder)}
+            className="w-full gap-2.5 font-semibold text-base"
+          >
+            <Archive className="size-5 shrink-0" aria-hidden />
+            {t("Archive Order")}
           </Button>
           <Button
             type="button"

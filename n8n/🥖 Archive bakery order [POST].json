@@ -1,0 +1,274 @@
+{
+  "name": "🥮 Archive bakery order [POST]",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bakery/orders/archive",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        0
+      ],
+      "id": "e5195b1c-556d-438c-bb73-c32465052db3",
+      "name": "Webhook",
+      "webhookId": "6e8c8b3d-7ad9-4c9b-aa38-9f601af0547e"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\n\nlet orderIds = [];\nif (body.orderIds && Array.isArray(body.orderIds)) {\n  orderIds = body.orderIds;\n} else if (body.orderId) {\n  orderIds = [body.orderId];\n} else {\n  return [{ json: { success: false, error: \"Missing orderIds\" } }];\n}\n\nif (orderIds.length === 0) {\n  return [{ json: { success: false, error: \"orderIds array is empty\" } }];\n}\n\nreturn orderIds.map(orderId => ({ json: { orderId } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "07b56078-3448-448e-ac0f-92f371cc2a5d",
+      "name": "Normalize order IDs"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4",
+          "mode": "list",
+          "cachedResultName": "Bread orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Order ID",
+              "lookupValue": "={{ $json.orderId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        0
+      ],
+      "id": "df6a5195-6625-4f24-9123-9b91d438d532",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sort by row_number descending so rows are deleted bottom-to-top,\n// preventing row-number shifting when deleting multiple rows from Sheet1.\nconst items = $input.all();\nreturn items\n  .sort((a, b) => b.json.row_number - a.json.row_number)\n  .map(item => ({\n    json: {\n      row_number: item.json.row_number,\n      \"Order ID\": item.json[\"Order ID\"],\n      \"Recipient\": item.json[\"Recipient\"],\n      \"Phone\": item.json[\"Phone\"],\n      \"Email\": item.json[\"Email\"],\n      \"Date\": item.json[\"Date\"],\n      \"Location\": item.json[\"Location\"],\n      \"Ordered articles\": item.json[\"Ordered articles\"],\n      \"Total price\": item.json[\"Total price\"],\n      \"Status\": item.json[\"Status\"],\n      \"Remark\": item.json[\"Remark\"]\n    }\n  }));",
+        "mode": "runOnceForAllItems"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "6c29afcc-4f61-4919-a57f-108c1680048e",
+      "name": "Sort by row number descending"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4",
+          "mode": "list",
+          "cachedResultName": "Bread orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Arhiva 2026.1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        720,
+        0
+      ],
+      "id": "279245a6-ee1b-49dc-9eaf-56eeb9e56cc9",
+      "name": "Append row to Arhiva 2026.1",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "value": "1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4",
+          "mode": "list",
+          "cachedResultName": "Bread orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1mWzaNO9ikwyuLhwCG1dwxxcBx-T4Q_0Hmbvffr3ZOM4/edit#gid=0"
+        },
+        "toDelete": "rows",
+        "startIndex": "={{ $('Sort by row number descending').item.json.row_number }}",
+        "amount": 1,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        960,
+        0
+      ],
+      "id": "635f09fa-ac19-4889-a258-8be9151160e5",
+      "name": "Delete row from Sheet1",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, archivedCount: $('Normalize order IDs').all().length } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "f9220871-1e15-4612-b73b-05676dae6885",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize order IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize order IDs": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Sort by row number descending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sort by row number descending": {
+      "main": [
+        [
+          {
+            "node": "Append row to Arhiva 2026.1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row to Arhiva 2026.1": {
+      "main": [
+        [
+          {
+            "node": "Delete row from Sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete row from Sheet1": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3d14193d-ebe8-4259-b312-f4d7c20411e3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32046c7d7105c211e2259616606f883c8b5cc71035b30bdbb85dfac864d6105f"
+  },
+  "tags": []
+}
