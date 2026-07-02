@@ -35,7 +35,7 @@ All webhooks are n8n workflows. See `n8n/README.md` for details.
 
 ## Architecture
 
-React 18 + TypeScript SPA with two routes (`/` → `OrdersPage`, `/bread-types` → `BreadTypesPage`) via react-router-dom `BrowserRouter` in `App.tsx`. A `public/404.html` + `index.html` sessionStorage trick handles SPA refreshes on shared hosting (Loopia Autobahn) where nginx config is not editable.
+React 18 + TypeScript SPA with two routes (`/` → `OrdersPage`, `/bread-types` → `BreadTypesPage`) via react-router-dom `HashRouter` in `App.tsx`. `HashRouter` is used because the app is hosted on Loopia Autobahn (nginx shared hosting) where nginx config is not editable — the hash is never sent to the server so refreshes always work.
 
 **Data flow (orders):**
 ```
