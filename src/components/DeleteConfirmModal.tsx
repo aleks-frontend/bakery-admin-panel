@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
-import { useDeleteOrdersMutation } from "@/hooks/useDeleteOrdersMutation"
 
 interface DeleteConfirmModalProps {
   open: boolean
@@ -19,6 +18,7 @@ interface DeleteConfirmModalProps {
   entitySingular: string
   entityPlural: string
   onSuccess?: () => void
+  onDelete: (ids: string[]) => Promise<void>
 }
 
 export function DeleteConfirmModal({
@@ -28,24 +28,28 @@ export function DeleteConfirmModal({
   entitySingular,
   entityPlural,
   onSuccess,
+  onDelete,
 }: DeleteConfirmModalProps) {
   const { t } = useTranslation()
-  const deleteMutation = useDeleteOrdersMutation()
+  const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!open) setDeleteError(null)
   }, [open])
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
+    setIsDeleting(true)
     setDeleteError(null)
-    deleteMutation.mutate(ids, {
-      onSuccess: () => {
-        onOpenChange(false)
-        onSuccess?.()
-      },
-      onError: (err) => setDeleteError(err.message),
-    })
+    try {
+      await onDelete(ids)
+      onOpenChange(false)
+      onSuccess?.()
+    } catch (err) {
+      setDeleteError((err as Error).message)
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const isSingle = ids.length === 1
@@ -71,16 +75,16 @@ export function DeleteConfirmModal({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={deleteMutation.isPending}
+            disabled={isDeleting}
           >
             {t("Cancel")}
           </Button>
           <Button
             variant="destructive"
             onClick={handleDelete}
-            disabled={deleteMutation.isPending}
+            disabled={isDeleting}
           >
-            {deleteMutation.isPending ? (
+            {isDeleting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 {t("Deleting...")}

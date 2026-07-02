@@ -1,4 +1,5 @@
 import { APIOrderSchema, Order, OrderStatus } from "@/types/order"
+import { BreadType, BreadTypesResponse } from "@/types/breadType"
 import { mapApiOrderToOrder } from "./orderMapper"
 import { QueryClient } from "@tanstack/react-query"
 
@@ -63,8 +64,7 @@ export async function updateOrderStatus(orderId: string, newStatus: OrderStatus)
 
 // --- Bread types ---
 
-export type BreadType = { id: string; name: string; price: number }
-export type BreadTypesResponse = { acceptingOrders: boolean; data: BreadType[] }
+export type { BreadType, BreadTypesResponse }
 
 export async function fetchBreadTypes(): Promise<BreadTypesResponse> {
   const url = import.meta.env.VITE_BREAD_TYPES_URL
@@ -76,6 +76,82 @@ export async function fetchBreadTypes(): Promise<BreadTypesResponse> {
   }
 
   return response.json() as Promise<BreadTypesResponse>
+}
+
+export async function createBreadType(breadType: BreadType): Promise<void> {
+  const url = import.meta.env.VITE_CREATE_BREAD_TYPE_URL
+  if (!url) throw new Error("VITE_CREATE_BREAD_TYPE_URL is not configured")
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(breadType),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || !(data as { success?: boolean }).success) {
+    throw new Error(
+      (data as { error?: string }).error ?? `Failed to create bread type: ${response.status}`
+    )
+  }
+}
+
+export async function updateBreadType(breadType: BreadType): Promise<void> {
+  const url = import.meta.env.VITE_UPDATE_BREAD_TYPE_URL
+  if (!url) throw new Error("VITE_UPDATE_BREAD_TYPE_URL is not configured")
+
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(breadType),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || !(data as { success?: boolean }).success) {
+    throw new Error(
+      (data as { error?: string }).error ?? `Failed to update bread type: ${response.status}`
+    )
+  }
+}
+
+export async function updateBreadTypeAvailability(ids: string[], available: boolean): Promise<void> {
+  const url = import.meta.env.VITE_UPDATE_BREAD_TYPE_AVAIL_URL
+  if (!url) throw new Error("VITE_UPDATE_BREAD_TYPE_AVAIL_URL is not configured")
+
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids, available }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || !(data as { success?: boolean }).success) {
+    throw new Error(
+      (data as { error?: string }).error ?? `Failed to update availability: ${response.status}`
+    )
+  }
+}
+
+export async function deleteBreadTypes(ids: string[]): Promise<void> {
+  const url = import.meta.env.VITE_DELETE_BREAD_TYPE_URL
+  if (!url) throw new Error("VITE_DELETE_BREAD_TYPE_URL is not configured")
+
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || !(data as { success?: boolean }).success) {
+    throw new Error(
+      (data as { error?: string }).error ?? `Failed to delete bread types: ${response.status}`
+    )
+  }
 }
 
 // --- Manual order creation ---

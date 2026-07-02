@@ -1,0 +1,113 @@
+{
+  "name": "🥖 Bread types webhook [DELETE]",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "bread-types",
+        "httpMethod": "DELETE",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a3b4c5d6-e7f8-9012-abcd-123456789012",
+      "name": "Webhook - Delete Bread Types",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-1840, 256],
+      "webhookId": "bread-types-delete"
+    },
+    {
+      "parameters": {
+        "jsCode": "// body = { ids: string[] }\nconst body = $input.first().json.body\nconst ids = body.ids\n\n// Emit one item per id so the Sheets node deletes each row\nreturn ids.map(id => ({\n  json: { id }\n}))"
+      },
+      "id": "b4c5d6e7-f8a9-0123-bcde-234567890123",
+      "name": "Code - Split IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1456, 256]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "value": "1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A",
+          "mode": "list",
+          "cachedResultName": "Bread types",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": ["id"],
+          "value": {
+            "id": "={{ $json.id }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [-1024, 256],
+      "id": "c5d6e7f8-a9b0-1234-cdef-345678901234",
+      "name": "Delete Row",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true }",
+        "options": {}
+      },
+      "id": "d6e7f8a9-b0c1-2345-defa-456789012345",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [-656, 256]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Delete Bread Types": {
+      "main": [[{ "node": "Code - Split IDs", "type": "main", "index": 0 }]]
+    },
+    "Code - Split IDs": {
+      "main": [[{ "node": "Delete Row", "type": "main", "index": 0 }]]
+    },
+    "Delete Row": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    },
+    "Respond to Webhook": {
+      "main": [[]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d4e5f6a7-b8c9-0123-defa-000000000004",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32046c7d7105c211e2259616606f883c8b5cc71035b30bdbb85dfac864d6105f"
+  },
+  "id": "BreadTypesDELETE001",
+  "tags": [
+    {
+      "updatedAt": "2026-01-26T16:36:27.524Z",
+      "createdAt": "2026-01-26T16:36:27.524Z",
+      "id": "KAzc7O3iFXwbjMpT",
+      "name": "Zoli"
+    }
+  ]
+}

@@ -19,7 +19,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// items = rows coming from Google Sheets node\nconst rows = $input.all()\n  .map(item => item.json)\n\n// 1. Find config row\nconst configRow = rows.find(\n  r => r.id === \"CONFIG\"\n);\n\nconst acceptingOrders =\n  configRow &&\n  String(configRow.accepting_orders).toLowerCase() === \"true\";\n\nconst breads = rows\n  .filter(row => row.id !== \"CONFIG\" && Boolean(row.available) === true)\n  .map(row => ({\n    id: row.id,\n    name: row.name,\n    price: Number(row.price)\n  }));\n\nreturn [\n  {\n    json: {\n      acceptingOrders,\n      data: breads\n    }\n  }\n];\n"
+        "jsCode": "// items = rows coming from Google Sheets node\nconst rows = $input.all()\n  .map(item => item.json)\n\n// 1. Find config row\nconst configRow = rows.find(\n  r => r.id === \"CONFIG\"\n);\n\nconst acceptingOrders =\n  configRow &&\n  String(configRow.accepting_orders).toLowerCase() === \"true\";\n\nconst breads = rows\n  .filter(row => row.id !== \"CONFIG\")\n  .map(row => ({\n    id: row.id,\n    name: row.name,\n    price: Number(row.price),\n    available: Boolean(row.available)\n  }));\n\nreturn [\n  {\n    json: {\n      acceptingOrders,\n      data: breads\n    }\n  }\n];\n"
       },
       "id": "ffe90a0c-6505-4ca9-a13b-22c729d0918b",
       "name": "Code - Bread Data",

@@ -1,0 +1,116 @@
+{
+  "name": "🥖 Bread types webhook [PATCH]",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "bread-types",
+        "httpMethod": "PATCH",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e5f6a7b8-c9d0-1234-efab-345678901234",
+      "name": "Webhook - Update Bread Type",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-1840, 256],
+      "webhookId": "bread-types-patch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body\n\nreturn [\n  {\n    json: {\n      id: body.id,\n      name: body.name,\n      price: body.price,\n      available: body.available\n    }\n  }\n]"
+      },
+      "id": "f6a7b8c9-d0e1-2345-fabc-456789012345",
+      "name": "Code - Extract Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1456, 256]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A",
+          "mode": "list",
+          "cachedResultName": "Bread types",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": ["id"],
+          "value": {
+            "id": "={{ $json.id }}",
+            "name": "={{ $json.name }}",
+            "price": "={{ $json.price }}",
+            "available": "={{ $json.available }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [-1024, 256],
+      "id": "a7b8c9d0-e1f2-3456-abcd-567890123456",
+      "name": "Update Row",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true }",
+        "options": {}
+      },
+      "id": "b8c9d0e1-f2a3-4567-bcde-678901234567",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [-656, 256]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Update Bread Type": {
+      "main": [[{ "node": "Code - Extract Body", "type": "main", "index": 0 }]]
+    },
+    "Code - Extract Body": {
+      "main": [[{ "node": "Update Row", "type": "main", "index": 0 }]]
+    },
+    "Update Row": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    },
+    "Respond to Webhook": {
+      "main": [[]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b2c3d4e5-f6a7-8901-bcde-000000000002",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32046c7d7105c211e2259616606f883c8b5cc71035b30bdbb85dfac864d6105f"
+  },
+  "id": "BreadTypesPATCH001",
+  "tags": [
+    {
+      "updatedAt": "2026-01-26T16:36:27.524Z",
+      "createdAt": "2026-01-26T16:36:27.524Z",
+      "id": "KAzc7O3iFXwbjMpT",
+      "name": "Zoli"
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "name": "🥖 Bread types webhook [PATCH - availability]",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "bread-types/availability",
+        "httpMethod": "PATCH",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c9d0e1f2-a3b4-5678-cdef-789012345678",
+      "name": "Webhook - Update Availability",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-1840, 256],
+      "webhookId": "bread-types-availability"
+    },
+    {
+      "parameters": {
+        "jsCode": "// body = { ids: string[], available: boolean }\nconst body = $input.first().json.body\nconst ids = body.ids\nconst available = body.available\n\n// Emit one item per id so the Sheets node processes each row\nreturn ids.map(id => ({\n  json: { id, available }\n}))"
+      },
+      "id": "d0e1f2a3-b4c5-6789-defa-890123456789",
+      "name": "Code - Split IDs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1456, 256]
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A",
+          "mode": "list",
+          "cachedResultName": "Bread types",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": ["id"],
+          "value": {
+            "id": "={{ $json.id }}",
+            "available": "={{ $json.available }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [-1024, 256],
+      "id": "e1f2a3b4-c5d6-7890-efab-901234567890",
+      "name": "Update Availability",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true }",
+        "options": {}
+      },
+      "id": "f2a3b4c5-d6e7-8901-fabc-012345678901",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [-656, 256]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Update Availability": {
+      "main": [[{ "node": "Code - Split IDs", "type": "main", "index": 0 }]]
+    },
+    "Code - Split IDs": {
+      "main": [[{ "node": "Update Availability", "type": "main", "index": 0 }]]
+    },
+    "Update Availability": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    },
+    "Respond to Webhook": {
+      "main": [[]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c3d4e5f6-a7b8-9012-cdef-000000000003",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32046c7d7105c211e2259616606f883c8b5cc71035b30bdbb85dfac864d6105f"
+  },
+  "id": "BreadTypesPATCHAvail",
+  "tags": [
+    {
+      "updatedAt": "2026-01-26T16:36:27.524Z",
+      "createdAt": "2026-01-26T16:36:27.524Z",
+      "id": "KAzc7O3iFXwbjMpT",
+      "name": "Zoli"
+    }
+  ]
+}

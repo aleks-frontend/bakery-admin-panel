@@ -142,7 +142,7 @@ export function OrdersTable({
               onClick={() =>
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
-              className="h-8 px-2"
+              className="h-8 px-2 text-xs font-semibold"
             >
               {t("Order ID")}
               <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -175,7 +175,7 @@ export function OrdersTable({
               onClick={() =>
                 column.toggleSorting(column.getIsSorted() === "asc")
               }
-              className="h-8 px-2"
+              className="h-8 px-2 text-xs font-semibold"
             >
               {t("Date")}
               <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -305,7 +305,7 @@ export function OrdersTable({
               {headerGroup.headers.map((header) => (
                 <TableHead
                   key={header.id}
-                  className="text-foreground font-semibold text-xs uppercase tracking-wider"
+                  className="text-foreground font-semibold text-xs"
                 >
                   {header.isPlaceholder
                     ? null

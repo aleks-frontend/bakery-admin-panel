@@ -2,11 +2,13 @@ import { useState, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useOrdersQuery } from "@/hooks/useOrdersQuery"
 import { useUpdateOrdersStatusBatchMutation } from "@/hooks/useUpdateOrderStatus"
+import { useDeleteOrdersMutation } from "@/hooks/useDeleteOrdersMutation"
 import { OrdersTable } from "@/components/OrdersTable"
 import { OrderDetailsModal } from "@/components/OrderDetailsModal"
 import { ManualOrderModal } from "@/components/ManualOrderModal"
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal"
 import { ArchiveConfirmModal } from "@/components/ArchiveConfirmModal"
+import { BulkPanel } from "@/components/BulkPanel"
 import { Order, OrderStatus } from "@/types/order"
 import { Input } from "@/components/ui/input"
 import {
@@ -23,7 +25,6 @@ import {
   FileSpreadsheet,
   Loader2,
   Plus,
-  RefreshCw,
   Search,
   Tag,
   Trash2,
@@ -34,6 +35,7 @@ export function OrdersPage() {
   const { t } = useTranslation()
   const { data: orders = [], isLoading, error } = useOrdersQuery()
   const batchStatusMutation = useUpdateOrdersStatusBatchMutation()
+  const deleteOrdersMutation = useDeleteOrdersMutation()
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [selectedOrders, setSelectedOrders] = useState<Order[]>([])
@@ -74,9 +76,9 @@ export function OrdersPage() {
     setIsDetailsModalOpen(true)
   }
 
-  const handleBulkStatusUpdate = () => {
-    if (!bulkStatus || !selectedOrders.length) return
-    const updates = selectedOrders.map((o) => ({ orderId: o.orderId, status: bulkStatus as OrderStatus }))
+  const handleBulkStatusChange = (status: OrderStatus) => {
+    setBulkStatus(status)
+    const updates = selectedOrders.map((o) => ({ orderId: o.orderId, status }))
     batchStatusMutation.mutate(updates)
   }
 
@@ -255,122 +257,50 @@ export function OrdersPage() {
         />
       </div>
 
-      {selectedOrders.length > 0 ? (
-        <div className="fixed inset-x-0 bottom-4 z-30 flex justify-center px-4">
-          <div className="flex w-full max-w-3xl flex-col gap-3 rounded-xl border-2 border-primary/35 bg-muted px-4 py-3.5 shadow-2xl shadow-black/20 ring-1 ring-black/[0.06] backdrop-blur-md dark:border-primary/45 dark:bg-muted/95 dark:shadow-black/40 dark:ring-white/10 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <p className="text-sm font-semibold text-foreground">
-              {t("{{count}} selected", { count: selectedOrders.length })}
-            </p>
-            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-              {/* Bulk status update */}
-              <div className="flex items-center gap-1.5">
-                <select
-                  value={bulkStatus}
-                  onChange={(e) => setBulkStatus(e.target.value as OrderStatus | "")}
-                  className="border border-input rounded-md px-2 py-1.5 text-sm bg-background"
-                >
-                  <option value="">{t("Select status...")}</option>
-                  <option value="Not received">{t("Not received")}</option>
-                  <option value="In Progress">{t("In Progress")}</option>
-                  <option value="Delivered">{t("Delivered")}</option>
-                </select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!bulkStatus || batchStatusMutation.isPending}
-                  onClick={handleBulkStatusUpdate}
-                >
-                  {batchStatusMutation.isPending ? (
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 shrink-0 animate-spin" aria-hidden />
-                  ) : (
-                    <RefreshCw className="mr-1.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                  )}
-                  {batchStatusMutation.isPending ? t("Updating...") : t("Update Status")}
-                </Button>
-              </div>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleBulkArchive}
-              >
-                <Archive className="mr-1.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                {t("Archive selected")}
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={handleBulkDelete}
-              >
-                <Trash2 className="mr-1.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-                {t("Delete selected")}
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleGenerateWorkshopList}
-                disabled={workshopPdfLoading}
-              >
-                {workshopPdfLoading ? (
-                  <Loader2
-                    className="mr-2 h-4 w-4 shrink-0 animate-spin"
-                    aria-hidden
-                  />
-                ) : (
-                  <ClipboardList
-                    className="mr-2 h-4 w-4 shrink-0"
-                    aria-hidden
-                  />
-                )}
-                {workshopPdfLoading
-                  ? t("Generating PDF...")
-                  : t("Generate Workshop List")}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleGeneratePackageStickers}
-                disabled={stickersPdfLoading}
-              >
-                {stickersPdfLoading ? (
-                  <Loader2
-                    className="mr-2 h-4 w-4 shrink-0 animate-spin"
-                    aria-hidden
-                  />
-                ) : (
-                  <Tag className="mr-2 h-4 w-4 shrink-0" aria-hidden />
-                )}
-                {stickersPdfLoading
-                  ? t("Generating PDF...")
-                  : t("Generate Package Stickers")}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleGenerateXls}
-                disabled={xlsLoading}
-              >
-                {xlsLoading ? (
-                  <Loader2
-                    className="mr-2 h-4 w-4 shrink-0 animate-spin"
-                    aria-hidden
-                  />
-                ) : (
-                  <FileSpreadsheet
-                    className="mr-2 h-4 w-4 shrink-0"
-                    aria-hidden
-                  />
-                )}
-                {xlsLoading ? t("Generating XLS...") : t("Generate XLS")}
-              </Button>
-            </div>
-          </div>
+      <BulkPanel count={selectedOrders.length}>
+        <div className="flex items-center gap-1.5">
+          {batchStatusMutation.isPending && (
+            <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" aria-hidden />
+          )}
+          <select
+            value={bulkStatus}
+            disabled={batchStatusMutation.isPending}
+            onChange={(e) => handleBulkStatusChange(e.target.value as OrderStatus)}
+            className="border border-input rounded-md px-2 py-1.5 text-sm bg-background disabled:opacity-50"
+          >
+            <option value="">{t("Select status...")}</option>
+            <option value="Not received">{t("Not received")}</option>
+            <option value="In Progress">{t("In Progress")}</option>
+            <option value="Delivered">{t("Delivered")}</option>
+          </select>
         </div>
-      ) : null}
+        <Button type="button" variant="outline" size="xs" onClick={handleBulkArchive}>
+          <Archive className="mr-1.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+          {t("Archive selected")}
+        </Button>
+        <Button type="button" variant="destructive" size="xs" onClick={handleBulkDelete}>
+          <Trash2 className="mr-1.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+          {t("Delete selected")}
+        </Button>
+        <Button type="button" variant="outline" size="xs" onClick={handleGenerateWorkshopList} disabled={workshopPdfLoading}>
+          {workshopPdfLoading
+            ? <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin" aria-hidden />
+            : <ClipboardList className="mr-2 h-4 w-4 shrink-0" aria-hidden />}
+          {workshopPdfLoading ? t("Generating PDF...") : t("Generate Workshop List")}
+        </Button>
+        <Button type="button" variant="outline" size="xs" onClick={handleGeneratePackageStickers} disabled={stickersPdfLoading}>
+          {stickersPdfLoading
+            ? <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin" aria-hidden />
+            : <Tag className="mr-2 h-4 w-4 shrink-0" aria-hidden />}
+          {stickersPdfLoading ? t("Generating PDF...") : t("Generate Package Stickers")}
+        </Button>
+        <Button type="button" variant="outline" size="xs" onClick={handleGenerateXls} disabled={xlsLoading}>
+          {xlsLoading
+            ? <Loader2 className="mr-2 h-4 w-4 shrink-0 animate-spin" aria-hidden />
+            : <FileSpreadsheet className="mr-2 h-4 w-4 shrink-0" aria-hidden />}
+          {xlsLoading ? t("Generating XLS...") : t("Generate XLS")}
+        </Button>
+      </BulkPanel>
 
       <OrderDetailsModal
         order={selectedOrder}
@@ -391,6 +321,7 @@ export function OrdersPage() {
         ids={orderIdsToDelete}
         entitySingular={t("order")}
         entityPlural={t("orders")}
+        onDelete={(ids) => deleteOrdersMutation.mutateAsync(ids)}
         onSuccess={() => setIsDetailsModalOpen(false)}
       />
 
