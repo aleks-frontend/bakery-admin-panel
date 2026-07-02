@@ -135,6 +135,25 @@ export async function updateBreadTypeAvailability(ids: string[], available: bool
   }
 }
 
+export async function updateAcceptingOrders(acceptingOrders: boolean): Promise<void> {
+  const url = import.meta.env.VITE_UPDATE_ACCEPTING_ORDERS_URL
+  if (!url) throw new Error("VITE_UPDATE_ACCEPTING_ORDERS_URL is not configured")
+
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ acceptingOrders }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok || !(data as { success?: boolean }).success) {
+    throw new Error(
+      (data as { error?: string }).error ?? `Failed to update accepting orders: ${response.status}`
+    )
+  }
+}
+
 export async function deleteBreadTypes(ids: string[]): Promise<void> {
   const url = import.meta.env.VITE_DELETE_BREAD_TYPE_URL
   if (!url) throw new Error("VITE_DELETE_BREAD_TYPE_URL is not configured")

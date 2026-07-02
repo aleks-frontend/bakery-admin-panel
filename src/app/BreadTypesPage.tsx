@@ -2,6 +2,7 @@ import { useState, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useBreadTypesQuery } from "@/hooks/useBreadTypesQuery"
 import { useUpdateBreadTypeAvailabilityMutation } from "@/hooks/useUpdateBreadTypeMutation"
+import { useUpdateAcceptingOrdersMutation } from "@/hooks/useUpdateAcceptingOrdersMutation"
 import { useDeleteBreadTypesMutation } from "@/hooks/useDeleteBreadTypesMutation"
 import { BreadTypesTable } from "@/components/BreadTypesTable"
 import { BreadTypeModal } from "@/components/BreadTypeModal"
@@ -16,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import { BulkPanel } from "@/components/BulkPanel"
 import { Loader2, Plus, Search, Trash2, X } from "lucide-react"
 
@@ -23,7 +25,9 @@ export function BreadTypesPage() {
   const { t } = useTranslation()
   const { data, isLoading, error } = useBreadTypesQuery()
   const breadTypes = useMemo(() => data?.data ?? [], [data])
+  const acceptingOrders = data?.acceptingOrders ?? false
   const availabilityMutation = useUpdateBreadTypeAvailabilityMutation()
+  const acceptingMutation = useUpdateAcceptingOrdersMutation()
   const deleteMutation = useDeleteBreadTypesMutation()
 
   const [selectedBreadType, setSelectedBreadType] = useState<BreadType | undefined>()
@@ -111,10 +115,26 @@ export function BreadTypesPage() {
           <h1 className="text-3xl font-bold tracking-tight">{t("Bread Types")}</h1>
           <p className="text-muted-foreground">{t("Manage bread types and availability")}</p>
         </div>
-        <Button onClick={handleAddNew}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t("Add Bread Type")}
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {acceptingMutation.isPending && (
+              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" aria-hidden />
+            )}
+            <label htmlFor="accepting-orders-toggle" className="text-sm font-medium cursor-pointer">
+              {t("Accepting Orders")}
+            </label>
+            <Switch
+              id="accepting-orders-toggle"
+              checked={acceptingOrders}
+              disabled={acceptingMutation.isPending || isLoading}
+              onCheckedChange={(checked) => acceptingMutation.mutate(checked)}
+            />
+          </div>
+          <Button onClick={handleAddNew}>
+            <Plus className="mr-2 h-4 w-4" />
+            {t("Add Bread Type")}
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">

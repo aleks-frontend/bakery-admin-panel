@@ -1,0 +1,101 @@
+{
+  "name": "🥖 Bread types webhook [PATCH - accepting orders]",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "bread-types/accepting-orders",
+        "httpMethod": "PATCH",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Webhook - Update Accepting Orders",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-1840, 256],
+      "webhookId": "bread-types-accepting-orders"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A",
+          "mode": "list",
+          "cachedResultName": "Bread types",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Zgbc0MhfBP2Kn7b9tVgWB2Hlu-Pl90d1KJ6UW21J30A/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": ["id"],
+          "value": {
+            "id": "CONFIG",
+            "accepting_orders": "={{ $json.body.acceptingOrders }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [-1456, 256],
+      "id": "b2c3d4e5-f6a7-8901-bcde-f23456789012",
+      "name": "Update Accepting Orders",
+      "credentials": {
+        "googleApi": {
+          "id": "maifhfjXlRvYOsIA",
+          "name": "Google Service Account account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"success\": true }",
+        "options": {}
+      },
+      "id": "c3d4e5f6-a7b8-9012-cdef-345678901234",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [-1024, 256]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook - Update Accepting Orders": {
+      "main": [[{ "node": "Update Accepting Orders", "type": "main", "index": 0 }]]
+    },
+    "Update Accepting Orders": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    },
+    "Respond to Webhook": {
+      "main": [[]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d4e5f6a7-b8c9-0123-defa-456789012345",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "32046c7d7105c211e2259616606f883c8b5cc71035b30bdbb85dfac864d6105f"
+  },
+  "id": "BreadTypesPATCHAcceptingOrders",
+  "tags": [
+    {
+      "updatedAt": "2026-01-26T16:36:27.524Z",
+      "createdAt": "2026-01-26T16:36:27.524Z",
+      "id": "KAzc7O3iFXwbjMpT",
+      "name": "Zoli"
+    }
+  ]
+}
