@@ -9,6 +9,7 @@ import { ManualOrderModal } from "@/components/ManualOrderModal"
 import { DeleteConfirmModal } from "@/components/DeleteConfirmModal"
 import { ArchiveConfirmModal } from "@/components/ArchiveConfirmModal"
 import { BulkPanel } from "@/components/BulkPanel"
+import { cn } from "@/lib/utils"
 import { Order, OrderStatus } from "@/types/order"
 import { Input } from "@/components/ui/input"
 import {
@@ -183,7 +184,12 @@ export function OrdersPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div
+      className={cn(
+        "container mx-auto py-8 space-y-6",
+        selectedOrders.length > 0 && "pb-28"
+      )}
+    >
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t("Orders")}</h1>
