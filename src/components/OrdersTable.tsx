@@ -278,7 +278,7 @@ export function OrdersTable({
       (row) => row.original
     );
     onSelectionChange(selectedOrders);
-  }, [onSelectionChange, rowSelection, table]);
+  }, [onSelectionChange, rowSelection, orders, table]);
 
   return (
     <div className="space-y-2">

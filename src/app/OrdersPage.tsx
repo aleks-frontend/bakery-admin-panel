@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useCallback, useState, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useOrdersQuery } from "@/hooks/useOrdersQuery"
 import { useUpdateOrdersStatusBatchMutation } from "@/hooks/useUpdateOrderStatus"
@@ -76,6 +76,11 @@ export function OrdersPage() {
     setSelectedOrder(order)
     setIsDetailsModalOpen(true)
   }
+
+  const handleSelectionChange = useCallback((orders: Order[]) => {
+    setSelectedOrders(orders)
+    setBulkStatus("")
+  }, [])
 
   const handleBulkStatusChange = (status: OrderStatus) => {
     setBulkStatus(status)
@@ -259,7 +264,7 @@ export function OrdersPage() {
           onViewDetails={handleViewDetails}
           onDeleteOrder={handleDeleteOrder}
           onArchiveOrder={handleArchiveOrder}
-          onSelectionChange={setSelectedOrders}
+          onSelectionChange={handleSelectionChange}
         />
       </div>
 
